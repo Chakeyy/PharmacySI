@@ -112,7 +112,7 @@ To prevent overwriting each other's code and avoid merge conflicts, please follo
    - Do not change existing struct definitions or function signatures.
    - Test locally to ensure it compiles with zero warnings:
      ```bash
-     gcc -Wall -Wextra -std=c99 PharmacySI.c -o pharmacy
+     gcc -Wall -Wextra -std=c99 PharmacySI.c -o PharmacySI
      ```
 4. **Commit and push your branch to GitHub**:
    ```bash
@@ -136,18 +136,25 @@ To prevent overwriting each other's code and avoid merge conflicts, please follo
 
 ## How to Compile & Run
 
-### 🪟 Windows (MinGW / GCC / Command Prompt / PowerShell)
-```cmd
-gcc -Wall -Wextra -std=c99 PharmacySI.c -o pharmacy.exe
-pharmacy.exe
+### ☁️ GitHub Codespaces (In-Browser Terminal)
+If you are working inside a GitHub Codespace (Linux environment):
+```bash
+gcc -Wall -Wextra -std=c99 PharmacySI.c -o PharmacySI
+./PharmacySI
 ```
-*If using an IDE like Code::Blocks or Dev-C++, open `PharmacySI.c`, ensure C99 mode is enabled in compiler settings, and press **Build and Run**.*
 
 ### 🐧 Linux / 🍎 macOS (Terminal)
 ```bash
-gcc -Wall -Wextra -std=c99 PharmacySI.c -o pharmacy
-./pharmacy
+gcc -Wall -Wextra -std=c99 PharmacySI.c -o PharmacySI
+./PharmacySI
 ```
+
+### 🪟 Windows (MinGW / GCC / Command Prompt / PowerShell)
+```cmd
+gcc -Wall -Wextra -std=c99 PharmacySI.c -o PharmacySI.exe
+PharmacySI.exe
+```
+*If using an IDE like Code::Blocks or Dev-C++, open `PharmacySI.c`, ensure C99 mode is enabled in compiler settings, and press **Build and Run**.*
 
 ### 📱 Android (Termux)
 - **Option A (Recommended — Running inside internal storage `~`)**:
@@ -156,13 +163,13 @@ gcc -Wall -Wextra -std=c99 PharmacySI.c -o pharmacy
   cd ~
   git clone https://github.com/Chakeyy/PharmacySI.git
   cd PharmacySI
-  gcc -std=c99 PharmacySI.c -o pharmacy
-  ./pharmacy
+  gcc -std=c99 PharmacySI.c -o PharmacySI
+  ./PharmacySI
   ```
 - **Option B (Working in shared storage `/storage/emulated/0/...`)**:
   Android shared storage is mounted with the `noexec` permission (binaries cannot be executed directly from shared folders). Compile the binary into your Termux home folder:
   ```bash
-  gcc PharmacySI.c -o ~/pharmacy && ~/pharmacy
+  gcc PharmacySI.c -o ~/PharmacySI && ~/PharmacySI
   ```
   *(Note: Do not use `/root/` unless your Termux environment is explicitly rooted/PRoot).*
 
