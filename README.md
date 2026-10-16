@@ -6,7 +6,7 @@ Console-based Pharmacy Sales and Inventory Management System written in C (C99 s
 
 ## ⚠️ Important Academic & Technical Constraints
 
-Please read these carefully before writing any code. All code will be inspected during project defense:
+Please read these carefully before writing any code:
 
 1. **Pure C (C99 Standard)**:
    - Use only standard C headers: `<stdio.h>`, `<stdlib.h>`, and `<string.h>`.
