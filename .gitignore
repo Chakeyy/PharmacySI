@@ -1,0 +1,10 @@
+# Executables and build artifacts
+PharmacySI
+PharmacySI.exe
+*.o
+*.obj
+*.out
+
+# Runtime data files (generated at runtime)
+inventory.txt
+sales.txt

@@ -19,6 +19,16 @@ void clearInputBuffer(void) {
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
+void clearScreen(void) {
+    system("cls");
+}
+
+void pauseScreen(void) {
+    printf("\nPress Enter to continue...");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
 int findMedicineById(const Medicine meds[], int count, int id) {
     for (int i = 0; i < count; i++) {
         if (meds[i].id == id) {
@@ -206,6 +216,7 @@ void removeMedicine(Medicine meds[], int *count) {
         printf("Invalid ID!\n");
         return;
     }
+    clearInputBuffer();
 
     index = findMedicineById(meds, *count, id);
 
@@ -236,7 +247,7 @@ void sortAndViewMedicines(const Medicine meds[], int count) {
         printf("\nInventory is empty!\n");
         return;
     }
-    system("cls");
+    clearScreen();
     printf("===== Sorting View =====\n");
     printf("\nSort By:\n");
     printf("[1] Name\n");
@@ -250,6 +261,7 @@ void sortAndViewMedicines(const Medicine meds[], int count) {
         printf("Invalid choice!\n");
         return;
     }
+    clearInputBuffer();
 
     if (field < 1 || field > 4) {
         printf("Invalid choice!\n");
@@ -266,6 +278,7 @@ void sortAndViewMedicines(const Medicine meds[], int count) {
         printf("Invalid choice!\n");
         return;
     }
+    clearInputBuffer();
 
     if (order < 1 || order > 2) {
         printf("Invalid choice!\n");
@@ -347,7 +360,8 @@ int main(void) {
     loadInventory(meds, &count);
 
     do {
-        printf("\n====================================\n");
+        clearScreen();
+        printf("====================================\n");
         printf("       PHARMACY MANAGEMENT SYSTEM\n");
         printf("====================================\n");
         printf("[1] Add Medicine\n");
@@ -363,32 +377,40 @@ int main(void) {
         if (scanf("%d", &choice) != 1) {
             clearInputBuffer();
             printf("\nInvalid choice! Please try again.\n");
+            pauseScreen();
             continue;
         }
+        clearInputBuffer();
 
         switch (choice) {
             case 1:
                 addMedicine(meds, &count);
+                pauseScreen();
                 break;
 
             case 2:
                 updateMedicine(meds, count);
+                pauseScreen();
                 break;
 
             case 3:
                 viewMedicines(meds, count);
+                pauseScreen();
                 break;
 
             case 4:
                 removeMedicine(meds, &count);
+                pauseScreen();
                 break;
 
             case 5:
                 sortAndViewMedicines(meds, count);
+                pauseScreen();
                 break;
 
             case 6:
                 recordSale(meds, count);
+                pauseScreen();
                 break;
 
             case 0:
@@ -397,6 +419,8 @@ int main(void) {
 
             default:
                 printf("\nInvalid choice! Please try again.\n");
+                pauseScreen();
+                break;
         }
 
     } while (choice != 0);
