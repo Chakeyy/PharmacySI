@@ -66,12 +66,6 @@ void saveInventory(const Medicine meds[], int count) {
 }
 
 void addMedicine(Medicine meds[], int *count) {
-    (void)meds;
-    (void)count;
-    printf("\n[1] Add Medicine\n");
-}
-
-void addMedicine(Medicine meds[], int *count) {
     Medicine newMed;
 
     if (*count >= MAX) {
@@ -157,6 +151,12 @@ void addMedicine(Medicine meds[], int *count) {
     saveInventory(meds, *count);
 
     printf("Medicine added successfully!\n");
+}
+
+void updateMedicine(Medicine meds[], int count) {
+    (void)meds;
+    (void)count;
+    printf("\n[2] Update Medicine\n");
 }
 
 void viewMedicines(const Medicine meds[], int count) {
