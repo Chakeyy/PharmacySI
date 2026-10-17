@@ -227,9 +227,110 @@ void removeMedicine(Medicine meds[], int *count) {
 
 
 void sortAndViewMedicines(const Medicine meds[], int count) {
-    (void)meds;
-    (void)count;
-    printf("\n[5] Listing (Sorted)\n");
+    Medicine tempMeds[MAX];
+    Medicine temp;
+    int field, order;
+    int i, j, swap;
+
+    if (count == 0) {
+        printf("\nInventory is empty!\n");
+        return;
+    }
+    system("cls");
+    printf("===== Sorting View =====\n");
+    printf("\nSort By:\n");
+    printf("[1] Name\n");
+    printf("[2] Price\n");
+    printf("[3] Quantity\n");
+    printf("[4] Expiry\n");
+    printf("Enter choice: ");
+
+    if (scanf("%d", &field) != 1) {
+        clearInputBuffer();
+        printf("Invalid choice!\n");
+        return;
+    }
+
+    if (field < 1 || field > 4) {
+        printf("Invalid choice!\n");
+        return;
+    }
+
+    printf("\nSort Order:\n");
+    printf("[1] Ascending\n");
+    printf("[2] Descending\n");
+    printf("Enter choice: ");
+
+    if (scanf("%d", &order) != 1) {
+        clearInputBuffer();
+        printf("Invalid choice!\n");
+        return;
+    }
+
+    if (order < 1 || order > 2) {
+        printf("Invalid choice!\n");
+        return;
+    }
+
+    // Copy the original inventory
+    for (i = 0; i < count; i++) {
+        tempMeds[i] = meds[i];
+    }
+
+    // Bubble Sort
+    for (i = 0; i < count - 1; i++) {
+        for (j = 0; j < count - i - 1; j++) {
+            swap = 0;
+
+            if (field == 1) {
+                // Sort by name
+                int cmp = strcmp(tempMeds[j].name,
+                                 tempMeds[j + 1].name);
+
+                if ((order == 1 && cmp > 0) ||
+                    (order == 2 && cmp < 0)) {
+                    swap = 1;
+                }
+            }
+            else if (field == 2) {
+                // Sort by price
+                if ((order == 1 &&
+                     tempMeds[j].price > tempMeds[j + 1].price) ||
+                    (order == 2 &&
+                     tempMeds[j].price < tempMeds[j + 1].price)) {
+                    swap = 1;
+                }
+            }
+            else if (field == 3) {
+                // Sort by quantity
+                if ((order == 1 &&
+                     tempMeds[j].quantity > tempMeds[j + 1].quantity) ||
+                    (order == 2 &&
+                     tempMeds[j].quantity < tempMeds[j + 1].quantity)) {
+                    swap = 1;
+                }
+            }
+            else if (field == 4) {
+                // Sort by expiry date (YYYY-MM-DD)
+                int cmp = strcmp(tempMeds[j].expiry,
+                                 tempMeds[j + 1].expiry);
+
+                if ((order == 1 && cmp > 0) ||
+                    (order == 2 && cmp < 0)) {
+                    swap = 1;
+                }
+            }
+
+            if (swap) {
+                temp = tempMeds[j];
+                tempMeds[j] = tempMeds[j + 1];
+                tempMeds[j + 1] = temp;
+            }
+        }
+    }
+
+    printf("\n--- Sorted Inventory ---\n");
+    viewMedicines(tempMeds, count);
 }
 
 void recordSale(Medicine meds[], int count) {
