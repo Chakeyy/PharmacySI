@@ -63,10 +63,10 @@ typedef struct {
 ### Menu Navigation Map
 | Option | Feature | Assigned Issue | Function | Status |
 |:---:|:---|:---|:---|:---:|
-| **[1]** | Add Medicine | [Issue #2](https://github.com/Chakeyy/PharmacySI/issues/2) | `addMedicine(Medicine meds[], int *count)` | In Progress |
+| **[1]** | Add Medicine | [Issue #2](https://github.com/Chakeyy/PharmacySI/issues/2) | `addMedicine(Medicine meds[], int *count)` | Done |
 | **[2]** | Update Medicine | [Issue #3](https://github.com/Chakeyy/PharmacySI/issues/3) | `updateMedicine(Medicine meds[], int count)` | In Progress |
-| **[3]** | View Medicine | [Issue #2](https://github.com/Chakeyy/PharmacySI/issues/2) | `viewMedicines(const Medicine meds[], int count)` | In Progress |
-| **[4]** | Remove Medicine | [Issue #3](https://github.com/Chakeyy/PharmacySI/issues/3) | `removeMedicine(Medicine meds[], int *count)` | In Progress |
+| **[3]** | View Medicine | [Issue #2](https://github.com/Chakeyy/PharmacySI/issues/2) | `viewMedicines(const Medicine meds[], int count)` | Done |
+| **[4]** | Remove Medicine | [Issue #3](https://github.com/Chakeyy/PharmacySI/issues/3) | `removeMedicine(Medicine meds[], int *count)` | Done |
 | **[5]** | Listing (Sorted) | [Issue #4](https://github.com/Chakeyy/PharmacySI/issues/4) | `sortAndViewMedicines(const Medicine meds[], int count)` | In Progress |
 | **[6]** | Sale | [Issue #4](https://github.com/Chakeyy/PharmacySI/issues/4) | `recordSale(Medicine meds[], int count)` | In Progress |
 | **[0]** | Exit | Core Architecture | `main()` | Done |
