@@ -83,11 +83,42 @@ void viewMedicines(const Medicine meds[], int count) {
     printf("\n[3] View Medicine\n");
 }
 
+
 void removeMedicine(Medicine meds[], int *count) {
-    (void)meds;
-    (void)count;
+    int id, index;
+
+    if (*count == 0) {
+        printf("\nInventory is empty!\n");
+        return;
+    }
+
     printf("\n[4] Remove Medicine\n");
+    printf("Enter Medicine ID to remove: ");
+
+    if (scanf("%d", &id) != 1) {
+        clearInputBuffer();
+        printf("Invalid ID!\n");
+        return;
+    }
+
+    index = findMedicineById(meds, *count, id);
+
+    if (index == -1) {
+        printf("Medicine not found!\n");
+        return;
+    }
+
+    for (int i = index; i < *count - 1; i++) {
+        meds[i] = meds[i + 1];
+    }
+
+    (*count)--;
+
+    saveInventory(meds, *count);
+
+    printf("Medicine removed successfully!\n");
 }
+
 
 void sortAndViewMedicines(const Medicine meds[], int count) {
     (void)meds;
