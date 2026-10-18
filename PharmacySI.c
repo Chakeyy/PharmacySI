@@ -24,7 +24,7 @@ void clearScreen(void) {
 }
 
 void pauseScreen(void) {
-    printf("\nPress Enter to continue...");
+    printf("\n  Press Enter to continue...");
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
@@ -79,61 +79,65 @@ void addMedicine(Medicine meds[], int *count) {
     Medicine newMed;
 
     if (*count >= MAX) {
-        printf("\nInventory is full!\n");
+        printf("\n  [!] Error: Inventory is full!\n");
         return;
     }
 
-    printf("\nEnter Medicine ID: ");
-    if (scanf("%d", &newMed.id) != 1) {
+    printf("\n+--------------------------------------------------+\n");
+    printf("|                 [1] ADD MEDICINE                 |\n");
+    printf("+--------------------------------------------------+\n");
+
+    printf("  Enter Medicine ID             : ");
+    if (scanf("%d", &newMed.id) != 1 || newMed.id <= 0) {
         clearInputBuffer();
-        printf("Invalid ID!\n");
+        printf("\n  [!] Invalid ID! Must be a positive integer.\n");
         return;
     }
     clearInputBuffer();
 
     if (findMedicineById(meds, *count, newMed.id) != -1) {
-        printf("Medicine ID already exists!\n");
+        printf("\n  [!] Error: Medicine ID %d already exists!\n", newMed.id);
         return;
     }
 
-    printf("Enter Medicine Name: ");
+    printf("  Enter Medicine Name           : ");
     if (scanf(" %49[^\n]", newMed.name) != 1) {
         clearInputBuffer();
-        printf("Invalid name!\n");
+        printf("\n  [!] Invalid medicine name!\n");
         return;
     }
     clearInputBuffer();
 
-    printf("Enter Category: ");
+    printf("  Enter Category                : ");
     if (scanf(" %29[^\n]", newMed.category) != 1) {
         clearInputBuffer();
-        printf("Invalid category!\n");
+        printf("\n  [!] Invalid category!\n");
         return;
     }
     clearInputBuffer();
 
-    printf("Enter Price: ");
+    printf("  Enter Unit Price              : ");
     if (scanf("%f", &newMed.price) != 1 ||
         newMed.price <= 0.0f) {
         clearInputBuffer();
-        printf("Price must be greater than 0.00!\n");
+        printf("\n  [!] Price must be greater than 0.00!\n");
         return;
     }
     clearInputBuffer();
 
-    printf("Enter Quantity: ");
+    printf("  Enter Stock Quantity          : ");
     if (scanf("%d", &newMed.quantity) != 1 ||
         newMed.quantity < 0) {
         clearInputBuffer();
-        printf("Quantity must be zero or positive!\n");
+        printf("\n  [!] Quantity must be zero or positive!\n");
         return;
     }
     clearInputBuffer();
 
-    printf("Enter Expiry Date (YYYY-MM-DD): ");
+    printf("  Enter Expiry Date (YYYY-MM-DD): ");
     if (scanf("%10s", newMed.expiry) != 1) {
         clearInputBuffer();
-        printf("Invalid expiry date!\n");
+        printf("\n  [!] Invalid expiry date!\n");
         return;
     }
     clearInputBuffer();
@@ -141,7 +145,7 @@ void addMedicine(Medicine meds[], int *count) {
     if (strlen(newMed.expiry) != 10 ||
         newMed.expiry[4] != '-' ||
         newMed.expiry[7] != '-') {
-        printf("Use YYYY-MM-DD format!\n");
+        printf("\n  [!] Invalid date! Use YYYY-MM-DD format.\n");
         return;
     }
 
@@ -150,7 +154,7 @@ void addMedicine(Medicine meds[], int *count) {
             continue;
 
         if (newMed.expiry[i] < '0' ||  newMed.expiry[i] > '9') {
-            printf("Use YYYY-MM-DD format!\n");
+            printf("\n  [!] Invalid date! Use YYYY-MM-DD format.\n");
             return;
         }
     }
@@ -160,7 +164,7 @@ void addMedicine(Medicine meds[], int *count) {
 
     saveInventory(meds, *count);
 
-    printf("Medicine added successfully!\n");
+    printf("\n  [+] Medicine added successfully!\n");
 }
 
 void updateMedicine(Medicine meds[], int count) {
@@ -170,16 +174,18 @@ void updateMedicine(Medicine meds[], int count) {
     char newExpiry[11];
 
     if (count == 0) {
-        printf("\nInventory is empty!\n");
+        printf("\n  [!] Inventory is currently empty!\n");
         return;
     }
 
-    printf("\n[2] Update Medicine\n");
-    printf("Enter Medicine ID to update: ");
+    printf("\n+--------------------------------------------------+\n");
+    printf("|                [2] UPDATE MEDICINE               |\n");
+    printf("+--------------------------------------------------+\n");
+    printf("  Enter Medicine ID to update   : ");
 
     if (scanf("%d", &id) != 1) {
         clearInputBuffer();
-        printf("Invalid ID!\n");
+        printf("\n  [!] Invalid ID!\n");
         return;
     }
     clearInputBuffer();
@@ -187,38 +193,38 @@ void updateMedicine(Medicine meds[], int count) {
     index = findMedicineById(meds, count, id);
 
     if (index == -1) {
-        printf("Medicine not found!\n");
+        printf("\n  [!] Medicine ID %d not found!\n", id);
         return;
     }
 
-    printf("\nCurrent Details:\n");
-    printf("Medicine : %s\n", meds[index].name);
-    printf("Category : %s\n", meds[index].category);
-    printf("Price    : %.2f\n", meds[index].price);
-    printf("Quantity : %d\n", meds[index].quantity);
-    printf("Expiry   : %s\n", meds[index].expiry);
-    printf("-----------------------------\n");
+    printf("\n  +--- Current Record ----------------------------+\n");
+    printf("  | Medicine : %-34.34s |\n", meds[index].name);
+    printf("  | Category : %-34.34s |\n", meds[index].category);
+    printf("  | Price    : %-34.2f |\n", meds[index].price);
+    printf("  | Quantity : %-34d |\n", meds[index].quantity);
+    printf("  | Expiry   : %-34s |\n", meds[index].expiry);
+    printf("  +-----------------------------------------------+\n\n");
 
-    printf("Enter New Price: ");
+    printf("  Enter New Price               : ");
     if (scanf("%f", &newPrice) != 1 || newPrice <= 0.0f) {
         clearInputBuffer();
-        printf("Price must be greater than 0.00!\n");
+        printf("\n  [!] Price must be greater than 0.00!\n");
         return;
     }
     clearInputBuffer();
 
-    printf("Enter New Quantity: ");
+    printf("  Enter New Quantity            : ");
     if (scanf("%d", &newQuantity) != 1 || newQuantity < 0) {
         clearInputBuffer();
-        printf("Quantity must be zero or positive!\n");
+        printf("\n  [!] Quantity must be zero or positive!\n");
         return;
     }
     clearInputBuffer();
 
-    printf("Enter New Expiry Date (YYYY-MM-DD): ");
+    printf("  Enter New Expiry (YYYY-MM-DD) : ");
     if (scanf("%10s", newExpiry) != 1) {
         clearInputBuffer();
-        printf("Invalid expiry date!\n");
+        printf("\n  [!] Invalid expiry date!\n");
         return;
     }
     clearInputBuffer();
@@ -226,7 +232,7 @@ void updateMedicine(Medicine meds[], int count) {
     if (strlen(newExpiry) != 10 ||
         newExpiry[4] != '-' ||
         newExpiry[7] != '-') {
-        printf("Use YYYY-MM-DD format!\n");
+        printf("\n  [!] Invalid date! Use YYYY-MM-DD format.\n");
         return;
     }
 
@@ -235,7 +241,7 @@ void updateMedicine(Medicine meds[], int count) {
             continue;
 
         if (newExpiry[i] < '0' || newExpiry[i] > '9') {
-            printf("Use YYYY-MM-DD format!\n");
+            printf("\n  [!] Invalid date! Use YYYY-MM-DD format.\n");
             return;
         }
     }
@@ -246,25 +252,25 @@ void updateMedicine(Medicine meds[], int count) {
 
     saveInventory(meds, count);
 
-    printf("Medicine updated successfully!\n");
+    printf("\n  [+] Medicine updated successfully!\n");
 }
 
 void viewMedicines(const Medicine meds[], int count) {
     if (count == 0) {
-        printf("\nThe inventory is currently empty.\n");
+        printf("\n  [!] The inventory is currently empty.\n");
         return;
     }
 
-    printf("\n==================== MEDICINE INVENTORY ====================\n");
-
-    printf("%-8s %-20s %-15s %10s %8s %-12s %s\n",
+    printf("\n+====================================================================================================+\n");
+    printf("|                                         MEDICINE INVENTORY                                         |\n");
+    printf("+====================================================================================================+\n");
+    printf("| %-8s | %-20s | %-15s | %10s | %8s | %-10s | %-11s |\n",
            "ID", "Name", "Category", "Price",
            "Quantity", "Expiry", "Status");
-
-    printf("-----------------------------------------------------------------------------------------------\n");
+    printf("+----------+----------------------+-----------------+------------+----------+------------+-------------+\n");
 
     for (int i = 0; i < count; i++) {
-        printf("%-8d %-20.20s %-15.15s %10.2f %8d %-12s %s\n",
+        printf("| %-8d | %-20.20s | %-15.15s | %10.2f | %8d | %-10s | %-11s |\n",
                meds[i].id,
                meds[i].name,
                meds[i].category,
@@ -274,26 +280,26 @@ void viewMedicines(const Medicine meds[], int count) {
                meds[i].quantity <= 10 ? "[LOW STOCK]" : "OK");
     }
 
-    printf("-----------------------------------------------------------------------------------------------\n");
-    printf("Total medicines: %d\n", count);
+    printf("+----------+----------------------+-----------------+------------+----------+------------+-------------+\n");
+    printf("  Total Medicines Listed: %d\n", count);
 }
-
-
 
 void removeMedicine(Medicine meds[], int *count) {
     int id, index;
 
     if (*count == 0) {
-        printf("\nInventory is empty!\n");
+        printf("\n  [!] Inventory is currently empty!\n");
         return;
     }
 
-    printf("\n[4] Remove Medicine\n");
-    printf("Enter Medicine ID to remove: ");
+    printf("\n+--------------------------------------------------+\n");
+    printf("|                [4] REMOVE MEDICINE               |\n");
+    printf("+--------------------------------------------------+\n");
+    printf("  Enter Medicine ID to remove   : ");
 
     if (scanf("%d", &id) != 1) {
         clearInputBuffer();
-        printf("Invalid ID!\n");
+        printf("\n  [!] Invalid ID!\n");
         return;
     }
     clearInputBuffer();
@@ -301,7 +307,7 @@ void removeMedicine(Medicine meds[], int *count) {
     index = findMedicineById(meds, *count, id);
 
     if (index == -1) {
-        printf("Medicine not found!\n");
+        printf("\n  [!] Medicine ID %d not found!\n", id);
         return;
     }
 
@@ -313,9 +319,8 @@ void removeMedicine(Medicine meds[], int *count) {
 
     saveInventory(meds, *count);
 
-    printf("Medicine removed successfully!\n");
+    printf("\n  [+] Medicine removed successfully!\n");
 }
-
 
 void sortAndViewMedicines(const Medicine meds[], int count) {
     Medicine tempMeds[MAX];
@@ -324,44 +329,47 @@ void sortAndViewMedicines(const Medicine meds[], int count) {
     int i, j, swap;
 
     if (count == 0) {
-        printf("\nInventory is empty!\n");
+        printf("\n  [!] Inventory is currently empty!\n");
         return;
     }
     clearScreen();
-    printf("===== Sorting View =====\n");
-    printf("\nSort By:\n");
-    printf("[1] Name\n");
-    printf("[2] Price\n");
-    printf("[3] Quantity\n");
-    printf("[4] Expiry\n");
-    printf("Enter choice: ");
+    printf("+==================================================+\n");
+    printf("|               [5] SORTED INVENTORY               |\n");
+    printf("+==================================================+\n");
+    printf("|  Sort By Field:                                  |\n");
+    printf("|    [1] Name              [2] Price               |\n");
+    printf("|    [3] Quantity          [4] Expiry Date         |\n");
+    printf("+--------------------------------------------------+\n");
+    printf("  Select field (1-4): ");
 
     if (scanf("%d", &field) != 1) {
         clearInputBuffer();
-        printf("Invalid choice!\n");
+        printf("\n  [!] Invalid choice!\n");
         return;
     }
     clearInputBuffer();
 
     if (field < 1 || field > 4) {
-        printf("Invalid choice!\n");
+        printf("\n  [!] Invalid choice!\n");
         return;
     }
 
-    printf("\nSort Order:\n");
-    printf("[1] Ascending\n");
-    printf("[2] Descending\n");
-    printf("Enter choice: ");
+    printf("\n+--------------------------------------------------+\n");
+    printf("|  Sort Direction:                                 |\n");
+    printf("|    [1] Ascending (A-Z / Low-High)                |\n");
+    printf("|    [2] Descending (Z-A / High-Low)               |\n");
+    printf("+--------------------------------------------------+\n");
+    printf("  Select order (1-2): ");
 
     if (scanf("%d", &order) != 1) {
         clearInputBuffer();
-        printf("Invalid choice!\n");
+        printf("\n  [!] Invalid choice!\n");
         return;
     }
     clearInputBuffer();
 
     if (order < 1 || order > 2) {
-        printf("Invalid choice!\n");
+        printf("\n  [!] Invalid choice!\n");
         return;
     }
 
@@ -422,7 +430,6 @@ void sortAndViewMedicines(const Medicine meds[], int count) {
         }
     }
 
-    printf("\n--- Sorted Inventory ---\n");
     viewMedicines(tempMeds, count);
 }
 
@@ -432,44 +439,50 @@ void recordSale(Medicine meds[], int count) {
     FILE *fp;
 
     if (count == 0) {
-        printf("\nInventory is empty!\n");
+        printf("\n  [!] Inventory is currently empty!\n");
         return;
     }
 
-    printf("\n[6] Sale\n");
-    printf("Enter Medicine ID: ");
+    printf("\n+--------------------------------------------------+\n");
+    printf("|                  [6] RECORD SALE                 |\n");
+    printf("+--------------------------------------------------+\n");
+    printf("  Enter Medicine ID             : ");
 
     if (scanf("%d", &id) != 1) {
         clearInputBuffer();
-        printf("Invalid ID!\n");
+        printf("\n  [!] Invalid ID!\n");
         return;
     }
+    clearInputBuffer();
 
     index = findMedicineById(meds, count, id);
 
     if (index == -1) {
-        printf("Medicine not found!\n");
+        printf("\n  [!] Medicine ID %d not found!\n", id);
         return;
     }
 
     if (meds[index].quantity <= 0) {
-        printf("Medicine is out of stock!\n");
+        printf("\n  [!] Medicine '%s' is out of stock!\n", meds[index].name);
         return;
     }
 
-    printf("Medicine: %s\n", meds[index].name);
-    printf("Price: %.2f\n", meds[index].price);
-    printf("Available Stock: %d\n", meds[index].quantity);
-    printf("Enter Quantity to Buy: ");
+    printf("\n  +--- Selected Item -----------------------------+\n");
+    printf("  | Medicine        : %-27.27s |\n", meds[index].name);
+    printf("  | Unit Price      : %-27.2f |\n", meds[index].price);
+    printf("  | Available Stock : %-27d |\n", meds[index].quantity);
+    printf("  +-----------------------------------------------+\n\n");
+    printf("  Enter Quantity to Buy         : ");
 
     if (scanf("%d", &quantity) != 1) {
         clearInputBuffer();
-        printf("Invalid quantity!\n");
+        printf("\n  [!] Invalid quantity!\n");
         return;
     }
+    clearInputBuffer();
 
     if (quantity <= 0 || quantity > meds[index].quantity) {
-        printf("Invalid quantity! Check available stock.\n");
+        printf("\n  [!] Invalid quantity! Please check available stock.\n");
         return;
     }
 
@@ -479,7 +492,7 @@ void recordSale(Medicine meds[], int count) {
     fp = fopen("sales.txt", "a");
 
     if (fp == NULL) {
-        printf("Error opening sales.txt!\n");
+        printf("\n  [!] Error opening sales.txt!\n");
         return;
     }
 
@@ -489,13 +502,13 @@ void recordSale(Medicine meds[], int count) {
                 meds[index].name,
                 quantity,
                 total) < 0) {
-        printf("Error recording sale!\n");
+        printf("\n  [!] Error recording sale!\n");
         fclose(fp);
         return;
     }
 
     if (fclose(fp) == EOF) {
-        printf("Error saving sales record!\n");
+        printf("\n  [!] Error saving sales record!\n");
         return;
     }
 
@@ -503,18 +516,20 @@ void recordSale(Medicine meds[], int count) {
     meds[index].quantity -= quantity;
 
     // Print receipt
-    printf("\n========== SALES RECEIPT ==========\n");
-    printf("Medicine ID : %d\n", meds[index].id);
-    printf("Medicine    : %s\n", meds[index].name);
-    printf("Price       : %.2f\n", meds[index].price);
-    printf("Quantity    : %d\n", quantity);
-    printf("-----------------------------------\n");
-    printf("TOTAL       : %.2f\n", total);
-    printf("Remaining   : %d\n", meds[index].quantity);
-    printf("===================================\n");
+    printf("\n  +================================================+\n");
+    printf("  |                 SALES RECEIPT                  |\n");
+    printf("  +================================================+\n");
+    printf("  | Medicine ID : %-32d |\n", meds[index].id);
+    printf("  | Medicine    : %-32.32s |\n", meds[index].name);
+    printf("  | Unit Price  : %-32.2f |\n", meds[index].price);
+    printf("  | Quantity    : %-32d |\n", quantity);
+    printf("  +------------------------------------------------+\n");
+    printf("  | TOTAL DUE   : %-32.2f |\n", total);
+    printf("  | Remaining   : %-32d |\n", meds[index].quantity);
+    printf("  +================================================+\n");
 
     if (meds[index].quantity <= 10) {
-        printf("LOW STOCK ALERT: Only %d left!\n",
+        printf("\n  [!] LOW STOCK ALERT: Only %d unit(s) left!\n",
                meds[index].quantity);
     }
 
@@ -530,23 +545,39 @@ int main(void) {
     loadInventory(meds, &count);
 
     do {
+        int lowStockCount = 0;
+        for (int i = 0; i < count; i++) {
+            if (meds[i].quantity <= 10) {
+                lowStockCount++;
+            }
+        }
+
         clearScreen();
-        printf("====================================\n");
-        printf("       PHARMACY MANAGEMENT SYSTEM\n");
-        printf("====================================\n");
-        printf("[1] Add Medicine\n");
-        printf("[2] Update Medicine\n");
-        printf("[3] View Medicine\n");
-        printf("[4] Remove Medicine\n");
-        printf("[5] Listing (Sorted)\n");
-        printf("[6] Sale\n");
-        printf("[0] Exit\n");
-        printf("====================================\n");
-        printf("Enter your choice: ");
+        printf("+==================================================+\n");
+        printf("|            PHARMACY MANAGEMENT SYSTEM            |\n");
+        printf("|          Sales & Inventory Control (C99)         |\n");
+        printf("+==================================================+\n");
+        printf("|  Inventory: %-3d / %-3d      Low Stock Alerts: %-3d |\n",
+               count, MAX, lowStockCount);
+        printf("+--------------------------------------------------+\n");
+        printf("|  INVENTORY MANAGEMENT                            |\n");
+        printf("|    [1] Add Medicine                              |\n");
+        printf("|    [2] Update Medicine                           |\n");
+        printf("|    [3] View Medicine                             |\n");
+        printf("|    [4] Remove Medicine                           |\n");
+        printf("|                                                  |\n");
+        printf("|  REPORTS & TRANSACTIONS                          |\n");
+        printf("|    [5] Listing (Sorted)                          |\n");
+        printf("|    [6] Sale                                      |\n");
+        printf("|                                                  |\n");
+        printf("|  SYSTEM                                          |\n");
+        printf("|    [0] Exit Program                              |\n");
+        printf("+==================================================+\n");
+        printf("  Enter your choice: ");
 
         if (scanf("%d", &choice) != 1) {
             clearInputBuffer();
-            printf("\nInvalid choice! Please try again.\n");
+            printf("\n  [!] Invalid choice! Please enter a number (0-6).\n");
             pauseScreen();
             continue;
         }
@@ -584,11 +615,11 @@ int main(void) {
                 break;
 
             case 0:
-                printf("\nExiting Pharmacy System...\n");
+                printf("\n  Exiting Pharmacy Management System. Goodbye!\n");
                 break;
 
             default:
-                printf("\nInvalid choice! Please try again.\n");
+                printf("\n  [!] Invalid choice! Please select 0 to 6.\n");
                 pauseScreen();
                 break;
         }
