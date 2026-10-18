@@ -104,50 +104,87 @@ void viewMedicines(const Medicine meds[], int count) {
     printf("  Total Medicines Listed: %d\n", count);
 }
 
+int readAndFormatExpiry(char expiry[]) {
+    char rawDate[20];
+    int len;
+
+    if (scanf(" %19[^\n]", rawDate) != 1) {
+        clearInputBuffer();
+        return 0;
+    }
+    clearInputBuffer();
+
+    len = (int)strlen(rawDate);
+
+    // Format 1: 8 digits without separators (YYYYMMDD -> YYYY-MM-DD)
+    if (len == 8) {
+        expiry[0] = rawDate[0];
+        expiry[1] = rawDate[1];
+        expiry[2] = rawDate[2];
+        expiry[3] = rawDate[3];
+        expiry[4] = '-';
+        expiry[5] = rawDate[4];
+        expiry[6] = rawDate[5];
+        expiry[7] = '-';
+        expiry[8] = rawDate[6];
+        expiry[9] = rawDate[7];
+        expiry[10] = '\0';
+    }
+    // Format 2: 10 characters with spaces or dashes (YYYY MM DD or YYYY-MM-DD)
+    else if (len == 10 &&
+             (rawDate[4] == '-' || rawDate[4] == ' ') &&
+             (rawDate[7] == '-' || rawDate[7] == ' ')) {
+        strcpy(expiry, rawDate);
+        expiry[4] = '-';
+        expiry[7] = '-';
+        expiry[10] = '\0';
+    }
+    else {
+        return 0;
+    }
+
+    // Verify all date positions are digits (0-9)
+    for (int i = 0; i < 10; i++) {
+        if (i == 4 || i == 7) {
+            continue;
+        }
+        if (expiry[i] < '0' || expiry[i] > '9') {
+            return 0;
+        }
+    }
+
+    // Validate month (01-12) and day (01-31)
+    int month = (expiry[5] - '0') * 10 + (expiry[6] - '0');
+    int day   = (expiry[8] - '0') * 10 + (expiry[9] - '0');
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+        return 0;
+    }
+
+    return 1;
+}
+
 void addMedicine(Medicine meds[], int *count) {
     Medicine newMed;
-    int suggestedId = 101;
 
     if (*count >= MAX) {
         printf("\n  [!] Error: Inventory is full!\n");
         return;
     }
 
+    // Automatically generate the next available ID (starts at 101)
+    newMed.id = 101;
     for (int i = 0; i < *count; i++) {
-        if (meds[i].id >= suggestedId) {
-            suggestedId = meds[i].id + 1;
+        if (meds[i].id >= newMed.id) {
+            newMed.id = meds[i].id + 1;
         }
     }
 
     printf("\n+--------------------------------------------------+\n");
     printf("|                 [1] ADD MEDICINE                 |\n");
     printf("+--------------------------------------------------+\n");
-    printf("  Tip: Suggested next ID is %d (Enter 0 to cancel)\n\n", suggestedId);
+    printf("  Auto-Assigned ID : %d (Enter 0 as Name to cancel)\n\n", newMed.id);
 
-    printf("  Enter Medicine ID             : ");
-    if (scanf("%d", &newMed.id) != 1) {
-        clearInputBuffer();
-        printf("\n  [!] Invalid ID! Must be a positive integer.\n");
-        return;
-    }
-    clearInputBuffer();
-
-    if (newMed.id == 0) {
-        printf("\n  [*] Add medicine cancelled.\n");
-        return;
-    }
-
-    if (newMed.id < 0) {
-        printf("\n  [!] Invalid ID! Must be a positive integer.\n");
-        return;
-    }
-
-    if (findMedicineById(meds, *count, newMed.id) != -1) {
-        printf("\n  [!] Error: Medicine ID %d already exists!\n", newMed.id);
-        return;
-    }
-
-    printf("  Enter Medicine Name           : ");
+    printf("  Enter Medicine Name                  : ");
     if (scanf(" %49[^\n]", newMed.name) != 1) {
         clearInputBuffer();
         printf("\n  [!] Invalid medicine name!\n");
@@ -155,7 +192,12 @@ void addMedicine(Medicine meds[], int *count) {
     }
     clearInputBuffer();
 
-    printf("  Enter Category                : ");
+    if (strcmp(newMed.name, "0") == 0) {
+        printf("\n  [*] Add medicine cancelled.\n");
+        return;
+    }
+
+    printf("  Enter Category                       : ");
     if (scanf(" %29[^\n]", newMed.category) != 1) {
         clearInputBuffer();
         printf("\n  [!] Invalid category!\n");
@@ -163,7 +205,7 @@ void addMedicine(Medicine meds[], int *count) {
     }
     clearInputBuffer();
 
-    printf("  Enter Unit Price              : ");
+    printf("  Enter Unit Price                     : ");
     if (scanf("%f", &newMed.price) != 1 ||
         newMed.price <= 0.0f) {
         clearInputBuffer();
@@ -172,7 +214,7 @@ void addMedicine(Medicine meds[], int *count) {
     }
     clearInputBuffer();
 
-    printf("  Enter Stock Quantity          : ");
+    printf("  Enter Stock Quantity                 : ");
     if (scanf("%d", &newMed.quantity) != 1 ||
         newMed.quantity < 0) {
         clearInputBuffer();
@@ -181,29 +223,10 @@ void addMedicine(Medicine meds[], int *count) {
     }
     clearInputBuffer();
 
-    printf("  Enter Expiry Date (YYYY-MM-DD): ");
-    if (scanf("%10s", newMed.expiry) != 1) {
-        clearInputBuffer();
-        printf("\n  [!] Invalid expiry date!\n");
+    printf("  Enter Expiry (YYYYMMDD / YYYY MM DD) : ");
+    if (!readAndFormatExpiry(newMed.expiry)) {
+        printf("\n  [!] Invalid date! Use YYYYMMDD, YYYY MM DD, or YYYY-MM-DD.\n");
         return;
-    }
-    clearInputBuffer();
-
-    if (strlen(newMed.expiry) != 10 ||
-        newMed.expiry[4] != '-' ||
-        newMed.expiry[7] != '-') {
-        printf("\n  [!] Invalid date! Use YYYY-MM-DD format.\n");
-        return;
-    }
-
-    for (int i = 0; i < 10; i++) {
-        if (i == 4 || i == 7)
-            continue;
-
-        if (newMed.expiry[i] < '0' ||  newMed.expiry[i] > '9') {
-            printf("\n  [!] Invalid date! Use YYYY-MM-DD format.\n");
-            return;
-        }
     }
 
     meds[*count] = newMed;
@@ -273,28 +296,9 @@ void updateMedicine(Medicine meds[], int count) {
     clearInputBuffer();
 
     printf("  Enter New Expiry (Current: %s)  : ", meds[index].expiry);
-    if (scanf("%10s", newExpiry) != 1) {
-        clearInputBuffer();
-        printf("\n  [!] Invalid expiry date!\n");
+    if (!readAndFormatExpiry(newExpiry)) {
+        printf("\n  [!] Invalid date! Use YYYYMMDD, YYYY MM DD, or YYYY-MM-DD.\n");
         return;
-    }
-    clearInputBuffer();
-
-    if (strlen(newExpiry) != 10 ||
-        newExpiry[4] != '-' ||
-        newExpiry[7] != '-') {
-        printf("\n  [!] Invalid date! Use YYYY-MM-DD format.\n");
-        return;
-    }
-
-    for (int i = 0; i < 10; i++) {
-        if (i == 4 || i == 7)
-            continue;
-
-        if (newExpiry[i] < '0' || newExpiry[i] > '9') {
-            printf("\n  [!] Invalid date! Use YYYY-MM-DD format.\n");
-            return;
-        }
     }
 
     meds[index].price = newPrice;
