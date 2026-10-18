@@ -4,6 +4,7 @@
 
 #define MAX 100
 #define INVENTORY_FILE "inventory.txt"
+#define SALES_FILE "sales.txt"
 
 typedef struct {
     int id;
@@ -29,6 +30,15 @@ void pauseScreen(void) {
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
+// Replaces any '|' character with '-' so user input cannot break pipe-delimited .txt files
+void sanitizePipes(char str[]) {
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == '|') {
+            str[i] = '-';
+        }
+    }
+}
+
 int findMedicineById(const Medicine meds[], int count, int id) {
     for (int i = 0; i < count; i++) {
         if (meds[i].id == id) {
@@ -38,21 +48,55 @@ int findMedicineById(const Medicine meds[], int count, int id) {
     return -1;
 }
 
+// Ensures both inventory.txt and sales.txt exist immediately on program startup
+void initDataFiles(void) {
+    FILE *fp;
+
+    fp = fopen(INVENTORY_FILE, "r");
+    if (fp == NULL) {
+        fp = fopen(INVENTORY_FILE, "w");
+    }
+    if (fp != NULL) {
+        fclose(fp);
+    }
+
+    fp = fopen(SALES_FILE, "r");
+    if (fp == NULL) {
+        fp = fopen(SALES_FILE, "w");
+    }
+    if (fp != NULL) {
+        fclose(fp);
+    }
+}
+
 void loadInventory(Medicine meds[], int *count) {
+    char line[256];
+    Medicine temp;
+
+    initDataFiles();
+
     FILE *fp = fopen(INVENTORY_FILE, "r");
     if (fp == NULL) {
         *count = 0;
         return;
     }
+
     *count = 0;
-    while (*count < MAX && fscanf(fp, "%d|%49[^|]|%29[^|]|%f|%d|%10[^\r\n]\n",
-           &meds[*count].id,
-           meds[*count].name,
-           meds[*count].category,
-           &meds[*count].price,
-           &meds[*count].quantity,
-           meds[*count].expiry) == 6) {
-        (*count)++;
+    while (*count < MAX && fgets(line, sizeof(line), fp) != NULL) {
+        if (sscanf(line, "%d|%49[^|]|%29[^|]|%f|%d|%10[^\r\n]",
+                   &temp.id,
+                   temp.name,
+                   temp.category,
+                   &temp.price,
+                   &temp.quantity,
+                   temp.expiry) == 6) {
+            // Skip invalid or duplicate IDs if file was edited manually
+            if (temp.id > 0 && temp.price > 0.0f && temp.quantity >= 0 &&
+                findMedicineById(meds, *count, temp.id) == -1) {
+                meds[*count] = temp;
+                (*count)++;
+            }
+        }
     }
     fclose(fp);
 }
@@ -60,7 +104,7 @@ void loadInventory(Medicine meds[], int *count) {
 void saveInventory(const Medicine meds[], int count) {
     FILE *fp = fopen(INVENTORY_FILE, "w");
     if (fp == NULL) {
-        printf("Error opening %s for writing!\n", INVENTORY_FILE);
+        printf("\n  [!] Error opening %s for writing!\n", INVENTORY_FILE);
         return;
     }
     for (int i = 0; i < count; i++) {
@@ -198,6 +242,7 @@ void addMedicine(Medicine meds[], int *count) {
             if (strcmp(newMed.name, "0") == 0) {
                 return;
             }
+            sanitizePipes(newMed.name);
             break;
         }
         clearInputBuffer();
@@ -211,6 +256,7 @@ void addMedicine(Medicine meds[], int *count) {
             if (strcmp(newMed.category, "0") == 0) {
                 return;
             }
+            sanitizePipes(newMed.category);
             break;
         }
         clearInputBuffer();
@@ -640,10 +686,10 @@ void recordSale(Medicine meds[], int count) {
     total = meds[index].price * quantity;
 
     // Open sales file before changing inventory
-    fp = fopen("sales.txt", "a");
+    fp = fopen(SALES_FILE, "a");
 
     if (fp == NULL) {
-        printf("\n  [!] Error opening sales.txt!\n");
+        printf("\n  [!] Error opening %s!\n", SALES_FILE);
         pauseScreen();
         return;
     }
@@ -672,14 +718,17 @@ void recordSale(Medicine meds[], int count) {
     // Calculate cumulative sales summary from sales.txt
     int totalSalesCount = 0;
     float totalRevenue = 0.0f;
-    fp = fopen("sales.txt", "r");
+    fp = fopen(SALES_FILE, "r");
     if (fp != NULL) {
+        char line[256];
         int sId, sQty;
         char sName[50];
         float sTotal;
-        while (fscanf(fp, "%d|%49[^|]|%d|%f\n", &sId, sName, &sQty, &sTotal) == 4) {
-            totalSalesCount++;
-            totalRevenue += sTotal;
+        while (fgets(line, sizeof(line), fp) != NULL) {
+            if (sscanf(line, "%d|%49[^|]|%d|%f", &sId, sName, &sQty, &sTotal) == 4) {
+                totalSalesCount++;
+                totalRevenue += sTotal;
+            }
         }
         fclose(fp);
     }
