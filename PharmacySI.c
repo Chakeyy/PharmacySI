@@ -557,6 +557,7 @@ void sortAndViewMedicines(const Medicine meds[], int count) {
 
 void recordSale(Medicine meds[], int count) {
     int id, index, quantity;
+    int availableItems = 0;
     float total;
     FILE *fp;
 
@@ -566,15 +567,28 @@ void recordSale(Medicine meds[], int count) {
         return;
     }
 
+    for (int i = 0; i < count; i++) {
+        if (meds[i].quantity > 0) {
+            availableItems++;
+        }
+    }
+
+    if (availableItems == 0) {
+        viewMedicines(meds, count);
+        printf("\n  [!] All medicines in inventory are currently out of stock!\n");
+        pauseScreen();
+        return;
+    }
+
     viewMedicines(meds, count);
 
     printf("\n+--------------------------------------------------+\n");
-    printf("|                  [6] RECORD SALE                 |\n");
+    printf("|                [6] SELL MEDICINE                 |\n");
     printf("|                Enter 0 to Cancel                 |\n");
     printf("+--------------------------------------------------+\n");
 
     while (1) {
-        printf("  Enter Medicine ID                    : ");
+        printf("  Enter Medicine ID to Sell            : ");
         if (scanf("%d", &id) != 1) {
             clearInputBuffer();
             printf("  [!] Invalid ID! Please enter a numeric ID.\n");
@@ -593,21 +607,22 @@ void recordSale(Medicine meds[], int count) {
         }
 
         if (meds[index].quantity <= 0) {
-            printf("  [!] Medicine '%s' is out of stock! Choose another item.\n", meds[index].name);
+            printf("  [!] '%s' is out of stock! Please select another ID.\n", meds[index].name);
             continue;
         }
 
         break;
     }
 
-    printf("\n  +--- Selected Item -----------------------------+\n");
+    printf("\n  +--- Medicine to Sell --------------------------+\n");
     printf("  | Medicine        : %-27.27s |\n", meds[index].name);
+    printf("  | Category        : %-27.27s |\n", meds[index].category);
     printf("  | Unit Price      : %-27.2f |\n", meds[index].price);
     printf("  | Available Stock : %-27d |\n", meds[index].quantity);
     printf("  +-----------------------------------------------+\n\n");
 
     while (1) {
-        printf("  Enter Quantity to Buy                : ");
+        printf("  Enter Quantity to Sell (Max: %-4d)   : ", meds[index].quantity);
         if (scanf("%d", &quantity) == 1) {
             clearInputBuffer();
             if (quantity == 0) {
@@ -654,22 +669,39 @@ void recordSale(Medicine meds[], int count) {
     // Deduct sold quantity
     meds[index].quantity -= quantity;
 
+    // Calculate cumulative sales summary from sales.txt
+    int totalSalesCount = 0;
+    float totalRevenue = 0.0f;
+    fp = fopen("sales.txt", "r");
+    if (fp != NULL) {
+        int sId, sQty;
+        char sName[50];
+        float sTotal;
+        while (fscanf(fp, "%d|%49[^|]|%d|%f\n", &sId, sName, &sQty, &sTotal) == 4) {
+            totalSalesCount++;
+            totalRevenue += sTotal;
+        }
+        fclose(fp);
+    }
+
     // Print receipt
     printf("\n  +================================================+\n");
     printf("  |                 SALES RECEIPT                  |\n");
     printf("  +================================================+\n");
-    printf("  | Medicine ID : %-32d |\n", meds[index].id);
-    printf("  | Medicine    : %-32.32s |\n", meds[index].name);
-    printf("  | Unit Price  : %-32.2f |\n", meds[index].price);
-    printf("  | Quantity    : %-32d |\n", quantity);
+    printf("  | Medicine ID   : %-30d |\n", meds[index].id);
+    printf("  | Medicine      : %-30.30s |\n", meds[index].name);
+    printf("  | Unit Price    : %-30.2f |\n", meds[index].price);
+    printf("  | Quantity Sold : %-30d |\n", quantity);
     printf("  +------------------------------------------------+\n");
-    printf("  | TOTAL DUE   : %-32.2f |\n", total);
-    printf("  | Remaining   : %-32d |\n", meds[index].quantity);
+    printf("  | TOTAL SALE    : %-30.2f |\n", total);
+    printf("  | Stock Left    : %-30d |\n", meds[index].quantity);
+    printf("  +------------------------------------------------+\n");
+    printf("  | Sales Logged  : %-4d   Total Revenue: %-8.2f |\n", totalSalesCount, totalRevenue);
     printf("  +================================================+\n");
 
     if (meds[index].quantity <= 10) {
-        printf("\n  [!] LOW STOCK ALERT: Only %d unit(s) left!\n",
-               meds[index].quantity);
+        printf("\n  [!] LOW STOCK ALERT: Only %d unit(s) of '%s' left!\n",
+               meds[index].quantity, meds[index].name);
     }
 
     // Save updated inventory
@@ -708,7 +740,7 @@ int main(void) {
         printf("|                                                  |\n");
         printf("|  REPORTS & TRANSACTIONS                          |\n");
         printf("|    [5] Listing (Sorted)                          |\n");
-        printf("|    [6] Sale                                      |\n");
+        printf("|    [6] Sell Medicine                             |\n");
         printf("|                                                  |\n");
         printf("|  SYSTEM                                          |\n");
         printf("|    [0] Exit Program                              |\n");
