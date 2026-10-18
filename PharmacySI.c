@@ -164,9 +164,89 @@ void addMedicine(Medicine meds[], int *count) {
 }
 
 void updateMedicine(Medicine meds[], int count) {
-    (void)meds;
-    (void)count;
+    int id, index;
+    float newPrice;
+    int newQuantity;
+    char newExpiry[11];
+
+    if (count == 0) {
+        printf("\nInventory is empty!\n");
+        return;
+    }
+
     printf("\n[2] Update Medicine\n");
+    printf("Enter Medicine ID to update: ");
+
+    if (scanf("%d", &id) != 1) {
+        clearInputBuffer();
+        printf("Invalid ID!\n");
+        return;
+    }
+    clearInputBuffer();
+
+    index = findMedicineById(meds, count, id);
+
+    if (index == -1) {
+        printf("Medicine not found!\n");
+        return;
+    }
+
+    printf("\nCurrent Details:\n");
+    printf("Medicine : %s\n", meds[index].name);
+    printf("Category : %s\n", meds[index].category);
+    printf("Price    : %.2f\n", meds[index].price);
+    printf("Quantity : %d\n", meds[index].quantity);
+    printf("Expiry   : %s\n", meds[index].expiry);
+    printf("-----------------------------\n");
+
+    printf("Enter New Price: ");
+    if (scanf("%f", &newPrice) != 1 || newPrice <= 0.0f) {
+        clearInputBuffer();
+        printf("Price must be greater than 0.00!\n");
+        return;
+    }
+    clearInputBuffer();
+
+    printf("Enter New Quantity: ");
+    if (scanf("%d", &newQuantity) != 1 || newQuantity < 0) {
+        clearInputBuffer();
+        printf("Quantity must be zero or positive!\n");
+        return;
+    }
+    clearInputBuffer();
+
+    printf("Enter New Expiry Date (YYYY-MM-DD): ");
+    if (scanf("%10s", newExpiry) != 1) {
+        clearInputBuffer();
+        printf("Invalid expiry date!\n");
+        return;
+    }
+    clearInputBuffer();
+
+    if (strlen(newExpiry) != 10 ||
+        newExpiry[4] != '-' ||
+        newExpiry[7] != '-') {
+        printf("Use YYYY-MM-DD format!\n");
+        return;
+    }
+
+    for (int i = 0; i < 10; i++) {
+        if (i == 4 || i == 7)
+            continue;
+
+        if (newExpiry[i] < '0' || newExpiry[i] > '9') {
+            printf("Use YYYY-MM-DD format!\n");
+            return;
+        }
+    }
+
+    meds[index].price = newPrice;
+    meds[index].quantity = newQuantity;
+    strcpy(meds[index].expiry, newExpiry);
+
+    saveInventory(meds, count);
+
+    printf("Medicine updated successfully!\n");
 }
 
 void viewMedicines(const Medicine meds[], int count) {
