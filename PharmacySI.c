@@ -1,25 +1,13 @@
-/*
- * ============================================================
- *  PharmacySI.c - Pharmacy Sales and Inventory System (CCS104)
- * ============================================================
- *  Console program written in standard C (C99).
- *  - Medicines are stored in a fixed-size array (no malloc).
- *  - Data is saved to plain-text, pipe-delimited files:
- *      inventory.txt : id|name|category|price|quantity|expiry
- *      sales.txt     : id|name|quantity|total
- * ============================================================
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /* ======================= CONSTANTS ======================= */
 
-#define MAX             100              /* Maximum number of medicines        */
-#define START_ID        101              /* First auto-generated medicine ID   */
-#define LOW_STOCK_LIMIT 10               /* Stock at or below this is "low"    */
-#define BOX_WIDTH       50               /* Inner width of header boxes        */
+#define MAX             100
+#define START_ID        101
+#define LOW_STOCK_LIMIT 10
+#define BOX_WIDTH       50
 #define INVENTORY_FILE  "inventory.txt"
 #define SALES_FILE      "sales.txt"
 
@@ -31,12 +19,11 @@ typedef struct {
     char category[30];
     float price;
     int quantity;
-    char expiry[11];   /* YYYY-MM-DD + '\0' */
+    char expiry[11];
 } Medicine;
 
 /* ================== FUNCTION PROTOTYPES ================== */
 
-/* Utility / input helpers */
 void clearInputBuffer(void);
 void clearScreen(void);
 void pauseScreen(void);
@@ -49,23 +36,19 @@ int  findMedicineByName(const Medicine meds[], int count, const char name[]);
 int  promptMedicineIndex(const Medicine meds[], int count, const char prompt[]);
 int  readAndFormatExpiry(char expiry[]);
 
-/* File handling */
 void initDataFiles(void);
 int  loadInventory(Medicine meds[], int *count);
 int  saveInventory(const Medicine meds[], int count);
 int  logSale(int id, const char name[], int quantity, float total);
 void getSalesSummary(int *salesCount, float *totalRevenue);
 
-/* Inventory operations */
 void addMedicine(Medicine meds[], int *count);
 void updateMedicine(Medicine meds[], int count);
 void viewMedicines(const Medicine meds[], int count);
 void removeMedicine(Medicine meds[], int *count);
 
-/* Sorting */
 void sortAndViewMedicines(const Medicine meds[], int count);
 
-/* Sales */
 void recordSale(Medicine meds[], int count);
 
 /* ========================= MAIN ========================== */
@@ -76,7 +59,6 @@ int main(void) {
     int choice;
     int skippedRows;
 
-    /* Load saved data (also creates the .txt files if missing) */
     skippedRows = loadInventory(meds, &count);
     if (skippedRows > 0) {
         printf("\n  [!] %d invalid row(s) in %s were skipped.\n", skippedRows, INVENTORY_FILE);
@@ -85,7 +67,6 @@ int main(void) {
     }
 
     do {
-        /* Count medicines that are low or out of stock for the dashboard */
         int lowStockCount = 0;
         for (int i = 0; i < count; i++) {
             if (meds[i].quantity <= LOW_STOCK_LIMIT) {
@@ -120,7 +101,7 @@ int main(void) {
             clearInputBuffer();
             printf("\n  [!] Invalid choice! Please enter a number (0-6).\n");
             pauseScreen();
-            choice = -1;   /* keep the loop running */
+            choice = -1;
             continue;
         }
         clearInputBuffer();
@@ -169,26 +150,21 @@ int main(void) {
 
 /* ================ UTILITY / INPUT HELPERS ================ */
 
-/* Removes leftover characters (including '\n') from the input buffer
- * so the next scanf/prompt does not get skipped. */
 void clearInputBuffer(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-/* Clears the console window (Windows "cls"). */
 void clearScreen(void) {
     system("cls");
 }
 
-/* Waits for the user to press Enter before continuing. */
 void pauseScreen(void) {
     int c;
     printf("\n  Press Enter to continue...");
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-/* Prints a horizontal border: +-----...-----+ */
 void printBoxLine(void) {
     printf("+");
     for (int i = 0; i < BOX_WIDTH; i++) {
@@ -197,7 +173,6 @@ void printBoxLine(void) {
     printf("+\n");
 }
 
-/* Prints text centered inside a box row: |   text   | */
 void printCentered(const char text[]) {
     int length = (int)strlen(text);
     int leftSpaces = (BOX_WIDTH - length) / 2;
@@ -214,7 +189,6 @@ void printCentered(const char text[]) {
     printf("|\n");
 }
 
-/* Prints a boxed screen header with a title and optional subtitle. */
 void printHeader(const char title[], const char subtitle[]) {
     printBoxLine();
     printCentered(title);
@@ -224,8 +198,6 @@ void printHeader(const char title[], const char subtitle[]) {
     printBoxLine();
 }
 
-/* Replaces any '|' with '-' so user input cannot break the
- * pipe-delimited format of the .txt files. */
 void sanitizePipes(char str[]) {
     for (int i = 0; str[i] != '\0'; i++) {
         if (str[i] == '|') {
@@ -234,7 +206,6 @@ void sanitizePipes(char str[]) {
     }
 }
 
-/* Linear search by ID. Returns the array index, or -1 if not found. */
 int findMedicineById(const Medicine meds[], int count, int id) {
     for (int i = 0; i < count; i++) {
         if (meds[i].id == id) {
@@ -244,7 +215,6 @@ int findMedicineById(const Medicine meds[], int count, int id) {
     return -1;
 }
 
-/* Linear search by exact name. Returns the array index, or -1 if not found. */
 int findMedicineByName(const Medicine meds[], int count, const char name[]) {
     for (int i = 0; i < count; i++) {
         if (strcmp(meds[i].name, name) == 0) {
@@ -254,8 +224,6 @@ int findMedicineByName(const Medicine meds[], int count, const char name[]) {
     return -1;
 }
 
-/* Keeps asking for a Medicine ID until a valid one is entered.
- * Returns the array index of the medicine, or -1 if the user entered 0 (cancel). */
 int promptMedicineIndex(const Medicine meds[], int count, const char prompt[]) {
     int id, index;
 
@@ -280,12 +248,6 @@ int promptMedicineIndex(const Medicine meds[], int count, const char prompt[]) {
     }
 }
 
-/* Reads an expiry date and stores it as YYYY-MM-DD.
- * Accepts: YYYYMMDD, YYYY MM DD, or YYYY-MM-DD.
- * Returns:  1 = valid date
- *           0 = invalid date
- *          -1 = user entered "0"  (cancel)
- *           2 = user entered "-1" (keep current value)  */
 int readAndFormatExpiry(char expiry[]) {
     char rawDate[20];
     int length, year, month, day, maxDay;
@@ -307,7 +269,6 @@ int readAndFormatExpiry(char expiry[]) {
     length = (int)strlen(rawDate);
 
     if (length == 8) {
-        /* YYYYMMDD -> insert the dashes */
         expiry[0] = rawDate[0];
         expiry[1] = rawDate[1];
         expiry[2] = rawDate[2];
@@ -323,7 +284,6 @@ int readAndFormatExpiry(char expiry[]) {
     else if (length == 10 &&
              (rawDate[4] == '-' || rawDate[4] == ' ') &&
              (rawDate[7] == '-' || rawDate[7] == ' ')) {
-        /* YYYY MM DD or YYYY-MM-DD -> force dashes */
         strcpy(expiry, rawDate);
         expiry[4] = '-';
         expiry[7] = '-';
@@ -332,7 +292,6 @@ int readAndFormatExpiry(char expiry[]) {
         return 0;
     }
 
-    /* Every position except the dashes must be a digit */
     for (int i = 0; i < 10; i++) {
         if (i == 4 || i == 7) {
             continue;
@@ -342,7 +301,6 @@ int readAndFormatExpiry(char expiry[]) {
         }
     }
 
-    /* Convert the digit characters into numbers */
     year  = (expiry[0] - '0') * 1000 + (expiry[1] - '0') * 100 +
             (expiry[2] - '0') * 10   + (expiry[3] - '0');
     month = (expiry[5] - '0') * 10 + (expiry[6] - '0');
@@ -355,7 +313,6 @@ int readAndFormatExpiry(char expiry[]) {
         return 0;
     }
 
-    /* February has 29 days in a leap year */
     maxDay = daysInMonth[month - 1];
     if (month == 2 && ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
         maxDay = 29;
@@ -369,7 +326,6 @@ int readAndFormatExpiry(char expiry[]) {
 
 /* ===================== FILE HANDLING ===================== */
 
-/* Creates inventory.txt and sales.txt if they do not exist yet. */
 void initDataFiles(void) {
     FILE *fp;
 
@@ -390,9 +346,6 @@ void initDataFiles(void) {
     }
 }
 
-/* Loads medicines from inventory.txt into the array, one line at a time.
- * Blank lines are ignored. Invalid or duplicate rows are skipped.
- * Returns the number of skipped rows. */
 int loadInventory(Medicine meds[], int *count) {
     char line[256];
     Medicine temp;
@@ -408,7 +361,6 @@ int loadInventory(Medicine meds[], int *count) {
     }
 
     while (*count < MAX && fgets(line, sizeof(line), fp) != NULL) {
-        /* Ignore empty lines */
         if (line[0] == '\n' || line[0] == '\r' || line[0] == '\0') {
             continue;
         }
@@ -429,8 +381,6 @@ int loadInventory(Medicine meds[], int *count) {
     return skippedRows;
 }
 
-/* Writes the whole array to inventory.txt.
- * Returns 1 if saved successfully, 0 if the file could not be written. */
 int saveInventory(const Medicine meds[], int count) {
     FILE *fp = fopen(INVENTORY_FILE, "w");
     if (fp == NULL) {
@@ -453,8 +403,6 @@ int saveInventory(const Medicine meds[], int count) {
     return 1;
 }
 
-/* Appends one sale record to sales.txt.
- * Returns 1 if saved successfully, 0 on error. */
 int logSale(int id, const char name[], int quantity, float total) {
     FILE *fp = fopen(SALES_FILE, "a");
     if (fp == NULL) {
@@ -472,7 +420,6 @@ int logSale(int id, const char name[], int quantity, float total) {
     return 1;
 }
 
-/* Reads sales.txt and computes the number of sales and total revenue. */
 void getSalesSummary(int *salesCount, float *totalRevenue) {
     char line[256];
     char name[50];
@@ -500,7 +447,6 @@ void getSalesSummary(int *salesCount, float *totalRevenue) {
 
 /* ================= INVENTORY OPERATIONS ================== */
 
-/* [1] Adds a new medicine with an auto-generated ID. */
 void addMedicine(Medicine meds[], int *count) {
     Medicine newMed;
     char subtitle[BOX_WIDTH + 1];
@@ -514,7 +460,6 @@ void addMedicine(Medicine meds[], int *count) {
         return;
     }
 
-    /* Next ID = highest existing ID + 1 (starts at START_ID) */
     newMed.id = START_ID;
     for (int i = 0; i < *count; i++) {
         if (meds[i].id >= newMed.id) {
@@ -526,7 +471,6 @@ void addMedicine(Medicine meds[], int *count) {
     printHeader("[1] ADD MEDICINE", subtitle);
     printf("\n");
 
-    /* Name (warns if the same name already exists) */
     while (1) {
         printf("  Enter Medicine Name                  : ");
         if (scanf(" %49[^\n]", newMed.name) != 1) {
@@ -556,7 +500,6 @@ void addMedicine(Medicine meds[], int *count) {
         clearInputBuffer();
     }
 
-    /* Category */
     while (1) {
         printf("  Enter Category                       : ");
         if (scanf(" %29[^\n]", newMed.category) == 1) {
@@ -571,7 +514,6 @@ void addMedicine(Medicine meds[], int *count) {
         printf("  [!] Invalid category! Please try again.\n");
     }
 
-    /* Price (0 cancels because a real price must be > 0) */
     while (1) {
         printf("  Enter Unit Price                     : ");
         if (scanf("%f", &newMed.price) == 1) {
@@ -588,7 +530,6 @@ void addMedicine(Medicine meds[], int *count) {
         printf("  [!] Price must be greater than 0.00! Please try again.\n");
     }
 
-    /* Quantity (0 is a valid stock amount here, so it does NOT cancel) */
     while (1) {
         printf("  Enter Stock Quantity                 : ");
         if (scanf("%d", &newMed.quantity) == 1) {
@@ -602,7 +543,6 @@ void addMedicine(Medicine meds[], int *count) {
         printf("  [!] Quantity cannot be negative! Please try again.\n");
     }
 
-    /* Expiry date */
     while (1) {
         printf("  Enter Expiry (YYYYMMDD / YYYY MM DD) : ");
         expiryStatus = readAndFormatExpiry(newMed.expiry);
@@ -619,7 +559,7 @@ void addMedicine(Medicine meds[], int *count) {
     (*count)++;
 
     if (!saveInventory(meds, *count)) {
-        (*count)--;   /* undo so memory matches the file */
+        (*count)--;
         printf("\n  [!] Error: Could not save to %s. Medicine was NOT added.\n", INVENTORY_FILE);
         pauseScreen();
         return;
@@ -629,8 +569,6 @@ void addMedicine(Medicine meds[], int *count) {
     pauseScreen();
 }
 
-/* [2] Updates price, quantity, and expiry of an existing medicine.
- *     -1 keeps the current value, 0 cancels (except quantity, where 0 is valid). */
 void updateMedicine(Medicine meds[], int count) {
     Medicine backup;
     int index, expiryStatus;
@@ -660,7 +598,6 @@ void updateMedicine(Medicine meds[], int count) {
     printf("  | Category : %-34.34s |\n", meds[index].category);
     printf("  +-----------------------------------------------+\n\n");
 
-    /* Price */
     while (1) {
         printf("  New Price    (Current: %10.2f)     : ", meds[index].price);
         if (scanf("%f", &newPrice) == 1) {
@@ -681,7 +618,6 @@ void updateMedicine(Medicine meds[], int count) {
         printf("  [!] Price must be greater than 0.00 (-1 = keep, 0 = cancel).\n");
     }
 
-    /* Quantity (0 is valid, e.g. to mark an item as out of stock) */
     while (1) {
         printf("  New Quantity (Current: %10d)     : ", meds[index].quantity);
         if (scanf("%d", &newQuantity) == 1) {
@@ -699,7 +635,6 @@ void updateMedicine(Medicine meds[], int count) {
         printf("  [!] Quantity cannot be negative (-1 = keep current).\n");
     }
 
-    /* Expiry date */
     while (1) {
         printf("  New Expiry   (Current: %10s)     : ", meds[index].expiry);
         expiryStatus = readAndFormatExpiry(newExpiry);
@@ -716,7 +651,6 @@ void updateMedicine(Medicine meds[], int count) {
         printf("  [!] Invalid date! Use a real date from 2000 to 2100 (-1 = keep, 0 = cancel).\n");
     }
 
-    /* Apply changes, but keep a backup in case saving fails */
     backup = meds[index];
     meds[index].price = newPrice;
     meds[index].quantity = newQuantity;
@@ -733,7 +667,6 @@ void updateMedicine(Medicine meds[], int count) {
     pauseScreen();
 }
 
-/* [3] Displays all medicines in a formatted table. */
 void viewMedicines(const Medicine meds[], int count) {
     const char *status;
 
@@ -772,7 +705,6 @@ void viewMedicines(const Medicine meds[], int count) {
     printf("  Total Medicines Listed: %d\n", count);
 }
 
-/* [4] Removes a medicine by ID and shifts the remaining elements left. */
 void removeMedicine(Medicine meds[], int *count) {
     int index, confirm;
 
@@ -812,7 +744,6 @@ void removeMedicine(Medicine meds[], int *count) {
         printf("  [!] Please enter 1 to confirm or 0 to cancel.\n");
     }
 
-    /* Shift every element after 'index' one position to the left */
     for (int i = index; i < *count - 1; i++) {
         meds[i] = meds[i + 1];
     }
@@ -830,8 +761,6 @@ void removeMedicine(Medicine meds[], int *count) {
 
 /* ======================== SORTING ======================== */
 
-/* [5] Copies the inventory, sorts the copy with Bubble Sort,
- *     and displays it. The original array order is not changed. */
 void sortAndViewMedicines(const Medicine meds[], int count) {
     Medicine tempMeds[MAX];
     Medicine temp;
@@ -893,39 +822,33 @@ void sortAndViewMedicines(const Medicine meds[], int count) {
         printf("  [!] Invalid choice! Please select 1 or 2 (or 0 to cancel).\n");
     }
 
-    /* Copy the original inventory so it stays unchanged */
     for (i = 0; i < count; i++) {
         tempMeds[i] = meds[i];
     }
 
-    /* Bubble Sort: compare neighbours and swap if they are in the wrong order */
     for (i = 0; i < count - 1; i++) {
         for (j = 0; j < count - i - 1; j++) {
             swap = 0;
 
             if (field == 1) {
-                /* Sort by name */
                 int cmp = strcmp(tempMeds[j].name, tempMeds[j + 1].name);
                 if ((order == 1 && cmp > 0) || (order == 2 && cmp < 0)) {
                     swap = 1;
                 }
             }
             else if (field == 2) {
-                /* Sort by price */
                 if ((order == 1 && tempMeds[j].price > tempMeds[j + 1].price) ||
                     (order == 2 && tempMeds[j].price < tempMeds[j + 1].price)) {
                     swap = 1;
                 }
             }
             else if (field == 3) {
-                /* Sort by quantity */
                 if ((order == 1 && tempMeds[j].quantity > tempMeds[j + 1].quantity) ||
                     (order == 2 && tempMeds[j].quantity < tempMeds[j + 1].quantity)) {
                     swap = 1;
                 }
             }
             else if (field == 4) {
-                /* Sort by expiry (YYYY-MM-DD strings compare correctly as text) */
                 int cmp = strcmp(tempMeds[j].expiry, tempMeds[j + 1].expiry);
                 if ((order == 1 && cmp > 0) || (order == 2 && cmp < 0)) {
                     swap = 1;
@@ -947,8 +870,6 @@ void sortAndViewMedicines(const Medicine meds[], int count) {
 
 /* ========================= SALES ========================= */
 
-/* [6] Sells a medicine: checks stock, logs the sale to sales.txt,
- *     deducts the quantity, prints a receipt, and saves the inventory. */
 void recordSale(Medicine meds[], int count) {
     int index, quantity;
     int availableItems = 0;
@@ -980,7 +901,6 @@ void recordSale(Medicine meds[], int count) {
     printf("\n");
     printHeader("[6] SELL MEDICINE", "Enter 0 to Cancel");
 
-    /* Pick a medicine that exists AND has stock */
     while (1) {
         index = promptMedicineIndex(meds, count, "Enter Medicine ID to Sell");
         if (index == -1) {
@@ -1017,7 +937,6 @@ void recordSale(Medicine meds[], int count) {
 
     total = meds[index].price * quantity;
 
-    /* Log the sale first; only change stock if logging worked */
     if (!logSale(meds[index].id, meds[index].name, quantity, total)) {
         printf("\n  [!] Error: Could not write to %s. Sale was NOT recorded.\n", SALES_FILE);
         pauseScreen();
