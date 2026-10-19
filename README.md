@@ -17,7 +17,7 @@ A console-based Pharmacy Sales and Inventory Management System developed in stan
 > * **Single Source File**: All program logic resides in [`PharmacySI.c`](PharmacySI.c).
 > * **Memory Model**: Fixed-size arrays only (`#define MAX 100`). Dynamic memory allocation (`malloc`, `calloc`, `realloc`, `free`) is prohibited.
 > * **Data Structures**: Flat structures (`Medicine`). Linked lists and multi-level pointers (`**`) are prohibited.
-> * **Algorithms**: Custom sorting algorithms only (e.g., Bubble Sort). Standard library `qsort()` is prohibited.
+> * **Algorithms**: Custom sorting algorithms only (Bubble Sort). Standard library `qsort()` is prohibited.
 > * **File Persistence**: Plain-text, pipe-delimited flat files (`inventory.txt`, `sales.txt`).
 
 ---
@@ -28,8 +28,8 @@ A console-based Pharmacy Sales and Inventory Management System developed in stan
 
 ```c
 typedef struct {
-    int id;              // Unique record identifier (> 0)
-    char name[50];       // Medicine name (supports spaces)
+    int id;              // Auto-assigned unique batch identifier (starts at 101)
+    char name[50];       // Medicine name (supports spaces and multiple batches)
     char category[30];   // Therapeutic category
     float price;         // Unit selling price (> 0.00)
     int quantity;        // Available stock units (>= 0)
@@ -39,12 +39,12 @@ typedef struct {
 
 | Field | Type | Constraints | Description |
 |:---|:---|:---|:---|
-| `id` | `int` | `> 0`, Unique | Primary identifier for search, updates, and removal |
-| `name` | `char[50]` | Non-empty | Full commercial name |
+| `id` | `int` | `>= 101`, Unique | Batch identifier auto-generated for search, updates, sales, and removal |
+| `name` | `char[50]` | Non-empty | Commercial name; multiple batches of the same medicine with different expiry dates are supported |
 | `category` | `char[30]` | Non-empty | Drug classification (e.g., Antibiotic, Pain Relief) |
-| `price` | `float` | `> 0.00` | Unit price in local currency |
-| `quantity` | `int` | `>= 0` | Current stock count; flags `[LOW STOCK]` when $\le 10$ |
-| `expiry` | `char[11]` | `YYYY-MM-DD` | Expiration date formatted as 10 characters |
+| `price` | `float` | `> 0.00` | Unit selling price |
+| `quantity` | `int` | `>= 0` | Current batch stock; flags `[OUT]` when $0$ and `[LOW STOCK]` when $1 \le \text{qty} \le 10$ |
+| `expiry` | `char[11]` | `YYYY-MM-DD` | Validated calendar date; flags `[EXPIRED]` when earlier than `CURRENT_DATE` |
 
 ### 2. File Persistence
 
@@ -53,13 +53,13 @@ typedef struct {
   101|Paracetamol 500mg|Pain Relief|2.50|120|2027-03-15
   102|Amoxicillin 500mg|Antibiotic|8.50|8|2026-12-01
   ```
-  *Loaded into memory on program launch via `loadInventory()` and auto-saved via `saveInventory()` after every state change.*
+  *Automatically created if missing on startup via `initDataFiles()`, loaded into memory via `loadInventory()`, and auto-saved via `saveInventory()` after every state change.*
 
-* **`sales.txt`** — Audit log for transactions (`id|name|quantity|total`):
+* **`sales.txt`** — Audit log for completed sales (`id|name|quantity|total`):
   ```text
   101|Paracetamol 500mg|5|12.50
   ```
-  *Appended automatically upon each completed purchase via `recordSale()` without overwriting past entries.*
+  *Automatically created if missing on startup and appended upon each confirmed transaction via `recordSale()` and `logSale()`.*
 
 ---
 
@@ -67,23 +67,39 @@ typedef struct {
 
 | Option | Feature | Assigned Role | Primary Function | Status |
 |:---:|:---|:---|:---|:---:|
-| **`[1]`** | Add Medicine | Member 2 ([Issue #2](https://github.com/Chakeyy/PharmacySI/issues/2)) | `addMedicine(Medicine meds[], int *count)` | Completed |
-| **`[2]`** | Update Medicine | Member 3 ([Issue #3](https://github.com/Chakeyy/PharmacySI/issues/3)) | `updateMedicine(Medicine meds[], int count)` | In Progress |
-| **`[3]`** | View Inventory | Member 2 ([Issue #2](https://github.com/Chakeyy/PharmacySI/issues/2)) | `viewMedicines(const Medicine meds[], int count)` | Completed |
+| **`[1]`** | Add Medicine (New Batch) | Member 2 ([Issue #2](https://github.com/Chakeyy/PharmacySI/issues/2)) | `addMedicine(Medicine meds[], int *count)` | Completed |
+| **`[2]`** | Update Medicine | Member 3 ([Issue #3](https://github.com/Chakeyy/PharmacySI/issues/3)) | `updateMedicine(Medicine meds[], int count)` | Completed |
+| **`[3]`** | View & Sort Inventory | Member 2 & Member 4 ([Issue #2](https://github.com/Chakeyy/PharmacySI/issues/2), [Issue #4](https://github.com/Chakeyy/PharmacySI/issues/4)) | `viewMedicines()`, `sortAndViewMedicines()` | Completed |
 | **`[4]`** | Remove Medicine | Member 3 ([Issue #3](https://github.com/Chakeyy/PharmacySI/issues/3)) | `removeMedicine(Medicine meds[], int *count)` | Completed |
-| **`[5]`** | Listing (Sorted) | Member 4 ([Issue #4](https://github.com/Chakeyy/PharmacySI/issues/4)) | `sortAndViewMedicines(const Medicine meds[], int count)` | Completed |
-| **`[6]`** | Record Sale | Member 4 ([Issue #4](https://github.com/Chakeyy/PharmacySI/issues/4)) | `recordSale(Medicine meds[], int count)` | In Progress |
+| **`[5]`** | Sell Medicine | Member 4 ([Issue #4](https://github.com/Chakeyy/PharmacySI/issues/4)) | `recordSale(Medicine meds[], int count)` | Completed |
 | **`[0]`** | Exit & UI Control | Lead (Core Architecture) | `main()`, `clearScreen()`, `pauseScreen()` | Completed |
 
 ---
 
-## Defensive Programming Standards
+## Quality-of-Life (QoL) & Defensive Programming Standards
 
-* **Buffer Sanitation**: All integer and float inputs via `scanf` must immediately flush trailing newline characters (`\n`) using `clearInputBuffer()`.
-* **String Preservation**: Multi-word string inputs (e.g. medicine names and categories) utilize scan formats like `scanf(" %49[^\n]", ...)` or `fgets()` to prevent truncation at spaces.
-* **Array Bound Safety**: Guard every insertion with `*count < MAX` and every query/mutation with `count == 0` validation.
-* **Date Validation**: Expiry inputs are verified to guarantee exact 10-character length, numerical digits, and hyphens at indices 4 and 7 (`YYYY-MM-DD`).
-* **Non-Destructive Sorting**: `sortAndViewMedicines()` copies the working array into a local `tempMeds` buffer before executing Bubble Sort, ensuring database index integrity remains intact.
+* **Batch-Based Auto-IDs**: Each added shipment receives a sequential Batch ID starting at `101` (`maxId + 1`), allowing multiple batches of the same medicine with different expiry dates to be tracked independently.
+* **Expired Batch Detection & Sale Protection**: `isExpired()` compares `YYYY-MM-DD` strings against `CURRENT_DATE` using `strcmp()`. Expired batches are flagged as `[EXPIRED]` in the inventory view, counted on the main dashboard, and blocked from being sold in `recordSale()`.
+* **Selective Field Updates**: In `Update Medicine`, users choose whether to update `[1] Unit Price`, `[2] Stock Quantity`, `[3] Expiry Date`, or `[4] All Fields` instead of re-entering unchanged values.
+* **Integrated View & Non-Destructive Sorting**: Selecting `[3] View & Sort Inventory` displays the full inventory table and lets the user sort in-place by Name, Price, Stock, or Expiry (Ascending or Descending) using Bubble Sort on a temporary copy (`tempMeds`) without altering the saved array order.
+* **Flexible Expiry Date Input**: `readAndFormatExpiry()` accepts `YYYYMMDD`, `YYYY MM DD`, or `YYYY-MM-DD`, validates calendar day bounds (including leap years for February), and normalizes storage to `YYYY-MM-DD`.
+* **Field-Level Retry & Instant Cancellation**: Invalid inputs re-prompt only the active field instead of restarting the form. Entering `0` at designated prompts immediately cancels the current operation.
+* **Delimiter Sanitization & Corruption Guard**: Any `|` character typed in string inputs is replaced with `-` via `sanitizePipes()`. `loadInventory()` skips malformed or duplicate-ID records and reports skipped lines on startup.
+
+---
+
+## Code Layout (`PharmacySI.c`)
+
+1. **Constants (`#define`)**: `MAX`, `START_ID`, `LOW_STOCK_LIMIT`, `BOX_WIDTH`, `CURRENT_DATE`, `INVENTORY_FILE`, `SALES_FILE`.
+2. **Data Structure**: `Medicine` struct definition.
+3. **Function Prototypes**: Grouped by module.
+4. **`main()` Loop**: Initializes data files, loads inventory, displays live stock/expired alerts, and routes menu options `0–5`.
+5. **Modular Sections**:
+   * `UTILITY / INPUT HELPERS`
+   * `FILE HANDLING`
+   * `INVENTORY OPERATIONS`
+   * `SORTING`
+   * `SALES`
 
 ---
 
@@ -104,44 +120,19 @@ gcc -Wall -Wextra -std=c99 PharmacySI.c -o PharmacySI
 
 ---
 
-## Development & Git Workflow
-
-To maintain a conflict-free repository, team members must adhere to feature branches:
-
-1. **Synchronize with latest `main`**:
-   ```bash
-   git checkout main
-   git pull origin main
-   ```
-2. **Create a dedicated feature branch**:
-   ```bash
-   git checkout -b feature/issue-<number>-<feature-name>
-   ```
-3. **Verify compilation locally**:
-   Ensure zero compiler warnings before staging:
-   ```bash
-   gcc -Wall -Wextra -std=c99 PharmacySI.c -o PharmacySI
-   ```
-4. **Commit and submit Pull Request**:
-   ```bash
-   git add PharmacySI.c
-   git commit -m "Implement <Feature Name> (closes #<Issue Number>)"
-   git push origin feature/issue-<number>-<feature-name>
-   ```
-
----
-
 ## Sample Test Dataset (`inventory.txt`)
 
-You can populate `inventory.txt` in the root directory to immediately test listing, sorting, and low-stock indicators without manual entry:
+You can populate `inventory.txt` in the root directory to immediately test batch listing, sorting, expired detection, out-of-stock, and low-stock indicators:
 
 ```text
 101|Paracetamol 500mg|Pain Relief|2.50|120|2027-03-15
-102|Amoxicillin 500mg|Antibiotic|8.50|8|2026-12-01
-103|Cetirizine 10mg|Antihistamine|1.75|50|2028-01-20
-104|Ibuprofen 400mg|Pain Relief|3.25|5|2026-11-10
-105|Mefenamic Acid 500mg|Pain Relief|4.00|35|2027-09-05
+102|Paracetamol 500mg|Pain Relief|2.50|40|2025-08-10
+103|Amoxicillin 500mg|Antibiotic|8.50|8|2026-12-01
+104|Cetirizine 10mg|Antihistamine|1.75|50|2028-01-20
+105|Ibuprofen 400mg|Pain Relief|3.25|0|2026-11-10
 ```
 
 > [!NOTE]
-> Medicines `102` (Stock: 8) and `104` (Stock: 5) have quantities $\le 10$, which will automatically activate the `[LOW STOCK]` alert tag in the tabular view.
+> * Batch `102` (`2025-08-10`) is earlier than `CURRENT_DATE` (`2026-10-19`) and displays `[EXPIRED]` (blocked from sale).
+> * Batch `103` (Stock: 8) displays `[LOW STOCK]`.
+> * Batch `105` (Stock: 0) displays `[OUT]`.
