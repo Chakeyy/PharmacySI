@@ -81,8 +81,11 @@ int main(void) {
 
         clearScreen();
         printf("+==================================================+\n");
-        printf("|            PHARMACY MANAGEMENT SYSTEM            |\n");
-        printf("|          Sales & Inventory Control (C99)         |\n");
+        printf("|   .   .---.   *  .                            .  |\n");
+        printf("|     __|   |__    PHARMACY MANAGEMENT SYSTEM      |\n");
+        printf("|  * |    +    | * Sales & Inventory Control    *  |\n");
+        printf("|    |__     __|   --------------------------      |\n");
+        printf("|   *   |___|   .  [ Rx Inventory & POS ]       .  |\n");
         printf("+==================================================+\n");
         printf("|  Date: %-10s            Items: %-3d / %-3d    |\n",
                CURRENT_DATE, count, MAX);
@@ -492,7 +495,7 @@ void addMedicine(Medicine meds[], int *count) {
     }
 
     while (1) {
-        printf("  Unit Price                           : ");
+        printf("  Unit Price (PHP)                     : ");
         if (scanf("%f", &newMed.price) == 1) {
             clearInputBuffer();
             if (newMed.price == 0.0f) {
@@ -504,7 +507,7 @@ void addMedicine(Medicine meds[], int *count) {
         } else {
             clearInputBuffer();
         }
-        printf("  [!] Price must be greater than 0.00 (or 0 to cancel).\n");
+        printf("  [!] Price must be greater than PHP 0.00 (or 0 to cancel).\n");
     }
 
     while (1) {
@@ -542,8 +545,8 @@ void addMedicine(Medicine meds[], int *count) {
         return;
     }
 
-    printf("\n  [+] '%s' (Batch ID: %d | Exp: %s) added to inventory!\n",
-           newMed.name, newMed.id, newMed.expiry);
+    printf("\n  [+] '%s' (Batch ID: %d | PHP %.2f | Exp: %s) added to inventory!\n",
+           newMed.name, newMed.id, newMed.price, newMed.expiry);
     if (isExpired(newMed.expiry)) {
         printf("  [!] Note: This batch's expiry date (%s) has already passed!\n", newMed.expiry);
     }
@@ -577,7 +580,7 @@ void updateMedicine(Medicine meds[], int count) {
     printf("\n  +--- Selected Batch (ID: %-4d) -----------------+\n", meds[index].id);
     printf("  | Medicine       : %-28.28s |\n", meds[index].name);
     printf("  | Category       : %-28.28s |\n", meds[index].category);
-    printf("  | [1] Unit Price : %-28.2f |\n", meds[index].price);
+    printf("  | [1] Unit Price : PHP %-24.2f |\n", meds[index].price);
     printf("  | [2] Quantity   : %-28d |\n", meds[index].quantity);
     printf("  | [3] Expiry     : %-28s |\n", meds[index].expiry);
     printf("  | [4] Update All Fields                         |\n");
@@ -606,7 +609,7 @@ void updateMedicine(Medicine meds[], int count) {
 
     if (action == 1 || action == 4) {
         while (1) {
-            printf("  New Unit Price (Current: %.2f)       : ", meds[index].price);
+            printf("  New Unit Price (Current: PHP %.2f)   : ", meds[index].price);
             if (scanf("%f", &newPrice) == 1) {
                 clearInputBuffer();
                 if (newPrice == 0.0f) {
@@ -618,7 +621,7 @@ void updateMedicine(Medicine meds[], int count) {
             } else {
                 clearInputBuffer();
             }
-            printf("  [!] Price must be greater than 0.00 (or 0 to cancel).\n");
+            printf("  [!] Price must be greater than PHP 0.00 (or 0 to cancel).\n");
         }
     }
 
@@ -675,12 +678,12 @@ void viewMedicines(const Medicine meds[], int count) {
         return;
     }
 
-    printf("+====================================================================================================+\n");
-    printf("|                                         MEDICINE INVENTORY                                         |\n");
-    printf("+====================================================================================================+\n");
-    printf("| %-8s | %-20s | %-15s | %10s | %8s | %-10s | %-11s |\n",
-           "Batch ID", "Name", "Category", "Price", "Stock", "Expiry", "Status");
-    printf("+----------+----------------------+-----------------+------------+----------+------------+-------------+\n");
+    printf("+=======================================================================================================+\n");
+    printf("|                                          MEDICINE INVENTORY                                           |\n");
+    printf("+=======================================================================================================+\n");
+    printf("| %-8s | %-20s | %-15s | %11s | %8s | %-10s | %-11s |\n",
+           "Batch ID", "Name", "Category", "Price (PHP)", "Stock", "Expiry", "Status");
+    printf("+----------+----------------------+-----------------+-------------+----------+------------+-------------+\n");
 
     for (int i = 0; i < count; i++) {
         if (isExpired(meds[i].expiry)) {
@@ -693,7 +696,7 @@ void viewMedicines(const Medicine meds[], int count) {
             status = "OK";
         }
 
-        printf("| %-8d | %-20.20s | %-15.15s | %10.2f | %8d | %-10s | %-11s |\n",
+        printf("| %-8d | %-20.20s | %-15.15s | %11.2f | %8d | %-10s | %-11s |\n",
                meds[i].id,
                meds[i].name,
                meds[i].category,
@@ -703,7 +706,7 @@ void viewMedicines(const Medicine meds[], int count) {
                status);
     }
 
-    printf("+----------+----------------------+-----------------+------------+----------+------------+-------------+\n");
+    printf("+----------+----------------------+-----------------+-------------+----------+------------+-------------+\n");
     printf("  Total Batches Listed: %d   (Current Date: %s)\n", count, CURRENT_DATE);
 }
 
@@ -917,7 +920,7 @@ void recordSale(Medicine meds[], int count) {
     printf("\n  +--- Selected Batch for Sale -------------------+\n");
     printf("  | Medicine        : %-27.27s |\n", meds[index].name);
     printf("  | Category        : %-27.27s |\n", meds[index].category);
-    printf("  | Unit Price      : %-27.2f |\n", meds[index].price);
+    printf("  | Unit Price      : PHP %-23.2f |\n", meds[index].price);
     printf("  | Available Stock : %-27d |\n", meds[index].quantity);
     printf("  | Expiry Date     : %-27s |\n", meds[index].expiry);
     printf("  +-----------------------------------------------+\n\n");
@@ -954,13 +957,13 @@ void recordSale(Medicine meds[], int count) {
     printf("  +================================================+\n");
     printf("  | Batch ID      : %-30d |\n", meds[index].id);
     printf("  | Medicine      : %-30.30s |\n", meds[index].name);
-    printf("  | Unit Price    : %-30.2f |\n", meds[index].price);
+    printf("  | Unit Price    : PHP %-26.2f |\n", meds[index].price);
     printf("  | Quantity Sold : %-30d |\n", quantity);
     printf("  +------------------------------------------------+\n");
-    printf("  | TOTAL AMOUNT  : %-30.2f |\n", total);
+    printf("  | TOTAL AMOUNT  : PHP %-26.2f |\n", total);
     printf("  | Remaining     : %-30d |\n", meds[index].quantity);
     printf("  +------------------------------------------------+\n");
-    printf("  | Total Sales   : %-4d   Total Revenue: %-8.2f |\n", salesCount, totalRevenue);
+    printf("  | Sales Logged: %-4d  Total Rev: PHP %-11.2f |\n", salesCount, totalRevenue);
     printf("  +================================================+\n");
 
     if (meds[index].quantity == 0) {
