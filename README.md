@@ -17,7 +17,7 @@ A console-based Pharmacy Sales and Inventory Management System developed in stan
 > * **Single Source File**: All program logic resides in [`PharmacySI.c`](PharmacySI.c).
 > * **Memory Model**: Fixed-size arrays only (`#define MAX 100`). Dynamic memory allocation (`malloc`, `calloc`, `realloc`, `free`) is prohibited.
 > * **Data Structures**: Flat structures (`Medicine`). Linked lists and multi-level pointers (`**`) are prohibited.
-> * **Algorithms**: Custom sorting algorithms only (e.g., Bubble Sort). Standard library `qsort()` is prohibited.
+> * **Algorithms**: Custom sorting algorithms only (Bubble Sort). Standard library `qsort()` is prohibited.
 > * **File Persistence**: Plain-text, pipe-delimited flat files (`inventory.txt`, `sales.txt`).
 
 ---
@@ -28,7 +28,7 @@ A console-based Pharmacy Sales and Inventory Management System developed in stan
 
 ```c
 typedef struct {
-    int id;              // Unique record identifier (> 0)
+    int id;              // Auto-assigned unique record identifier (starts at 101)
     char name[50];       // Medicine name (supports spaces)
     char category[30];   // Therapeutic category
     float price;         // Unit selling price (> 0.00)
@@ -39,12 +39,12 @@ typedef struct {
 
 | Field | Type | Constraints | Description |
 |:---|:---|:---|:---|
-| `id` | `int` | `> 0`, Unique | Primary identifier for search, updates, and removal |
-| `name` | `char[50]` | Non-empty | Full commercial name |
+| `id` | `int` | `>= 101`, Unique | Primary identifier auto-generated via `getNextId()` for search, updates, and removal |
+| `name` | `char[50]` | Non-empty | Full commercial name (pipes automatically sanitized) |
 | `category` | `char[30]` | Non-empty | Drug classification (e.g., Antibiotic, Pain Relief) |
 | `price` | `float` | `> 0.00` | Unit price in local currency |
-| `quantity` | `int` | `>= 0` | Current stock count; flags `[LOW STOCK]` when $\le 10$ |
-| `expiry` | `char[11]` | `YYYY-MM-DD` | Expiration date formatted as 10 characters |
+| `quantity` | `int` | `>= 0` | Current stock count; flags `[OUT]` when $0$ and `[LOW STOCK]` when $1 \le \text{qty} \le 10$ |
+| `expiry` | `char[11]` | `YYYY-MM-DD` | Expiration date validated against real calendar month lengths and leap years |
 
 ### 2. File Persistence
 
@@ -53,13 +53,13 @@ typedef struct {
   101|Paracetamol 500mg|Pain Relief|2.50|120|2027-03-15
   102|Amoxicillin 500mg|Antibiotic|8.50|8|2026-12-01
   ```
-  *Loaded into memory on program launch via `loadInventory()` and auto-saved via `saveInventory()` after every state change.*
+  *Automatically created if missing on startup via `initDataFiles()`, loaded into memory via `loadInventory()`, and auto-saved via `saveInventory()` after every state change.*
 
-* **`sales.txt`** — Audit log for transactions (`id|name|quantity|total`):
+* **`sales.txt`** — Audit log for completed sales (`id|name|quantity|total`):
   ```text
   101|Paracetamol 500mg|5|12.50
   ```
-  *Appended automatically upon each completed purchase via `recordSale()` without overwriting past entries.*
+  *Automatically created if missing on startup and appended upon each confirmed transaction via `recordSale()` and `logSale()`.*
 
 ---
 
@@ -68,22 +68,40 @@ typedef struct {
 | Option | Feature | Assigned Role | Primary Function | Status |
 |:---:|:---|:---|:---|:---:|
 | **`[1]`** | Add Medicine | Member 2 ([Issue #2](https://github.com/Chakeyy/PharmacySI/issues/2)) | `addMedicine(Medicine meds[], int *count)` | Completed |
-| **`[2]`** | Update Medicine | Member 3 ([Issue #3](https://github.com/Chakeyy/PharmacySI/issues/3)) | `updateMedicine(Medicine meds[], int count)` | In Progress |
+| **`[2]`** | Update Medicine | Member 3 ([Issue #3](https://github.com/Chakeyy/PharmacySI/issues/3)) | `updateMedicine(Medicine meds[], int count)` | Completed |
 | **`[3]`** | View Inventory | Member 2 ([Issue #2](https://github.com/Chakeyy/PharmacySI/issues/2)) | `viewMedicines(const Medicine meds[], int count)` | Completed |
 | **`[4]`** | Remove Medicine | Member 3 ([Issue #3](https://github.com/Chakeyy/PharmacySI/issues/3)) | `removeMedicine(Medicine meds[], int *count)` | Completed |
 | **`[5]`** | Listing (Sorted) | Member 4 ([Issue #4](https://github.com/Chakeyy/PharmacySI/issues/4)) | `sortAndViewMedicines(const Medicine meds[], int count)` | Completed |
-| **`[6]`** | Record Sale | Member 4 ([Issue #4](https://github.com/Chakeyy/PharmacySI/issues/4)) | `recordSale(Medicine meds[], int count)` | In Progress |
+| **`[6]`** | Sell Medicine | Member 4 ([Issue #4](https://github.com/Chakeyy/PharmacySI/issues/4)) | `recordSale(Medicine meds[], int count)` | Completed |
 | **`[0]`** | Exit & UI Control | Lead (Core Architecture) | `main()`, `clearScreen()`, `pauseScreen()` | Completed |
 
 ---
 
-## Defensive Programming Standards
+## Quality-of-Life (QoL) & Defensive Programming Standards
 
-* **Buffer Sanitation**: All integer and float inputs via `scanf` must immediately flush trailing newline characters (`\n`) using `clearInputBuffer()`.
-* **String Preservation**: Multi-word string inputs (e.g. medicine names and categories) utilize scan formats like `scanf(" %49[^\n]", ...)` or `fgets()` to prevent truncation at spaces.
-* **Array Bound Safety**: Guard every insertion with `*count < MAX` and every query/mutation with `count == 0` validation.
-* **Date Validation**: Expiry inputs are verified to guarantee exact 10-character length, numerical digits, and hyphens at indices 4 and 7 (`YYYY-MM-DD`).
-* **Non-Destructive Sorting**: `sortAndViewMedicines()` copies the working array into a local `tempMeds` buffer before executing Bubble Sort, ensuring database index integrity remains intact.
+* **Auto-Generated IDs**: New medicines automatically receive the next sequential ID starting at `101` (`maxId + 1`), eliminating manual ID collisions.
+* **Flexible Expiry Date Input**: `readAndFormatExpiry()` accepts `YYYY-MM-DD`, `YYYY MM DD`, or `YYYYMMDD`, validates calendar day bounds (including leap years for February), and normalizes storage to `YYYY-MM-DD`.
+* **Field-Level Retry & Instant Cancellation**: Invalid inputs re-prompt only the active field instead of restarting the entire form. Entering `0` at designated prompts immediately cancels the current operation and returns to the main menu.
+* **Selective Field Updates**: During `Update Medicine`, entering `-1` for Price, Quantity, or Expiry retains the existing value without requiring re-entry.
+* **Duplicate Name Warning**: Adding a medicine whose name already exists (case-insensitive check via `findMedicineByName()`) alerts the user with the existing ID and asks for confirmation before creating a duplicate entry.
+* **Delimiter Sanitization & Corruption Guard**: Any `|` character typed in string inputs is automatically replaced with `/` via `sanitizePipes()` so `inventory.txt` and `sales.txt` columns cannot be corrupted. `loadInventory()` skips malformed or duplicate-ID records and reports skipped lines on startup.
+* **Verified File Saves**: `saveInventory()` and `logSale()` return status codes (`1` on success, `0` on failure). If saving fails during an operation, in-memory changes are rolled back or reported immediately.
+* **Non-Destructive Sorting**: `sortAndViewMedicines()` copies the working array into a local `tempMeds` buffer before executing Bubble Sort, ensuring the primary array order remains intact.
+
+---
+
+## Code Layout (`PharmacySI.c`)
+
+1. **`#includes` and `#defines`**: Standard headers (`<stdio.h>`, `<stdlib.h>`, `<string.h>`) and named constants (`MAX`, `START_ID`, `LOW_STOCK_LIMIT`, `BOX_WIDTH`, `INVENTORY_FILE`, `SALES_FILE`).
+2. **Struct Definition**: `Medicine` structure definition.
+3. **Function Prototypes**: Grouped by functional module for top-down readability.
+4. **`main()` Loop**: Initializes data files, loads existing inventory, and runs the interactive `do-while` and `switch` menu loop.
+5. **Modular Sections**:
+   * Utility & Input Helpers (`clearScreen`, `clearInputBuffer`, `pauseScreen`, `findMedicineById`, `findMedicineByName`, `getNextId`, `sanitizePipes`, `readAndFormatExpiry`, `promptMedicineIndex`)
+   * File Handling (`initDataFiles`, `loadInventory`, `saveInventory`, `logSale`)
+   * Inventory Operations (`addMedicine`, `viewMedicines`, `updateMedicine`, `removeMedicine`)
+   * Sorting (`sortAndViewMedicines`)
+   * Sales Operations (`recordSale`)
 
 ---
 
@@ -104,44 +122,17 @@ gcc -Wall -Wextra -std=c99 PharmacySI.c -o PharmacySI
 
 ---
 
-## Development & Git Workflow
-
-To maintain a conflict-free repository, team members must adhere to feature branches:
-
-1. **Synchronize with latest `main`**:
-   ```bash
-   git checkout main
-   git pull origin main
-   ```
-2. **Create a dedicated feature branch**:
-   ```bash
-   git checkout -b feature/issue-<number>-<feature-name>
-   ```
-3. **Verify compilation locally**:
-   Ensure zero compiler warnings before staging:
-   ```bash
-   gcc -Wall -Wextra -std=c99 PharmacySI.c -o PharmacySI
-   ```
-4. **Commit and submit Pull Request**:
-   ```bash
-   git add PharmacySI.c
-   git commit -m "Implement <Feature Name> (closes #<Issue Number>)"
-   git push origin feature/issue-<number>-<feature-name>
-   ```
-
----
-
 ## Sample Test Dataset (`inventory.txt`)
 
-You can populate `inventory.txt` in the root directory to immediately test listing, sorting, and low-stock indicators without manual entry:
+You can populate `inventory.txt` in the root directory to immediately test listing, sorting, out-of-stock, and low-stock indicators without manual entry:
 
 ```text
 101|Paracetamol 500mg|Pain Relief|2.50|120|2027-03-15
 102|Amoxicillin 500mg|Antibiotic|8.50|8|2026-12-01
 103|Cetirizine 10mg|Antihistamine|1.75|50|2028-01-20
-104|Ibuprofen 400mg|Pain Relief|3.25|5|2026-11-10
+104|Ibuprofen 400mg|Pain Relief|3.25|0|2026-11-10
 105|Mefenamic Acid 500mg|Pain Relief|4.00|35|2027-09-05
 ```
 
 > [!NOTE]
-> Medicines `102` (Stock: 8) and `104` (Stock: 5) have quantities $\le 10$, which will automatically activate the `[LOW STOCK]` alert tag in the tabular view.
+> Medicine `102` (Stock: 8) activates the `[LOW STOCK]` alert tag ($\le 10$), while Medicine `104` (Stock: 0) displays the `[OUT]` tag in the tabular view.
